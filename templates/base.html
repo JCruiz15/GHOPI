@@ -1,0 +1,81 @@
+<!-- This is a template that contains the navbar and footer -->
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+    <link rel="stylesheet" href="static/css/style.css">
+
+    <!-- Links and title inside the head tag -->
+    {{template "head" .}}
+</head>
+
+<body class="d-flex flex-column min-vh-100 bg">
+    <header>
+        <div class="container-fluid bg-dark s p-2">
+            <nav class="navbar navbar-dark navbar-expand-md shadow">
+                <a href="/" class="navbar-brand ps-3">Configuration [NAME WIP]</a>
+                <button class="navbar-toggler ms-1 me-auto" type="button" data-bs-toggle="collapse" data-bs-target="#menuItems" aria-controls="menuItems" aria-expanded="false" aria-label="Toggle Navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                {{template "navbar" .}}
+            </nav>
+        </div>
+    </header>
+    <main>
+    <!-- Main cotent of the view -->
+    {{template "content" .}}
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        const u = window.location.href
+        function getPathFromUrl(u) {
+            return u.split(/[?#]/)[0];
+        }
+        const url_copy = getPathFromUrl(u)
+        function copyOP() {
+            const url = url_copy + "api/openproject";
+            navigator.clipboard.writeText(url);
+            Swal.fire({
+                    title: "URL copied to your clipboard",
+                    text: url,
+                    icon: "success"
+                })
+        }
+
+        function copyGithub() {
+            const url = url_copy + "api/github";
+            navigator.clipboard.writeText(url);
+            Swal.fire({
+                    title: "URL copied to your clipboard",
+                    text: url,
+                    icon: "success"
+                })
+        }
+
+        function copyGitlab() {
+            const url = url_copy + "api/gitlab";
+            navigator.clipboard.writeText(url);
+            Swal.fire({
+                    title: "URL copied to your clipboard",
+                    text: url,
+                    icon: "success"
+                })
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+        </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {{template "scripts" .}}
+</body>
+</html>
+{{end}}

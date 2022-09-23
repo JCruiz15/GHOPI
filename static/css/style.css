@@ -1,0 +1,83 @@
+.text-lgray {
+  color: lightgrey;
+}
+
+.bg-darkgray {
+  background-color: darkslategrey;
+}
+
+.btn-sync {
+  position: relative;
+  padding: 5px 15px;
+  background: dodgerblue;
+  border: none;
+  outline: none;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.btn-sync:active {
+  transform: scale(0.95);
+}
+
+.btn-sync:hover {
+  background-color: rgb(30, 23, 220);
+}
+
+.btn-sync:focus {
+  background: rgb(30, 23, 220);;
+}
+
+.btn-sync__text {
+  color: #ffffff;
+  transition: all 0.2s;
+}
+
+.btn-sync--loading .btn-sync__text {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.btn-sync--loading {
+  animation: breathing-color 1.25s ease-out alternate infinite;
+}
+
+.btn-sync--loading::after{
+  content: "";
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  border: 4px solid transparent;
+  border-top-color: #ffffff;
+  border-bottom-color: #ffffff;
+  border-radius: 50%;
+  animation: loading-spinner 1.25s ease infinite;
+}
+
+@keyframes loading-spinner {
+  from{
+    transform: rotate(0turn);
+  }
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes breathing-color {
+  from{
+    background-color: dodgerblue;
+  }
+  to {
+    background-color: rgb(30, 23, 220);
+  }
+}
+
+.inline-icon {
+  vertical-align: text-bottom;
+  font-size: 18px;
+}
