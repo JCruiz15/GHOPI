@@ -6,13 +6,12 @@ import (
 	"log"
 	"net/http"
 	"text/template"
+	"time"
 
 	"web-service-gin/applications"
 
 	"github.com/joho/godotenv"
 )
-
-// NOTE: In go public functions start with mayus and private functions not.
 
 // TODO - Make the decisions via Objects oriented. Request abstract class with children.
 
@@ -26,6 +25,10 @@ import (
 
 // TODO - When refresh create a new branch for every new task
 
+// TODO - Api security, prevent XSS, Session tokens etc.
+
+// TODO - Create post buttons for user inputs
+
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("No .env file found")
@@ -34,6 +37,7 @@ func init() {
 
 func main() {
 	var github applications.Github = *applications.NewGithub()
+	var openproject applications.OpenProject = *applications.NewOpenProject()
 
 	fileServer := http.FileServer(http.Dir("./static"))
 
@@ -51,7 +55,16 @@ func main() {
 			github.LoggedinHandler(w, r, "", "")
 		})
 
-	log.Fatal(http.ListenAndServe(":5002", nil))
+	http.HandleFunc("/op/login", openproject.LoginHandler)
+	http.HandleFunc("/op/login/callback", openproject.CallbackHandler)
+	http.HandleFunc("/op/loggedin",
+		func(w http.ResponseWriter, r *http.Request) {
+			openproject.LoggedinHandler(w, r, "", "")
+		})
+
+	port := 5002
+	fmt.Printf("Application started on port %d\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string) {
@@ -84,5 +97,9 @@ func requestOpenProject(body map[string]interface{}) {
 }
 
 func refresh(w http.ResponseWriter, r *http.Request) {
-	print(r.Method)
+	var t time.Duration
+	t, _ = time.ParseDuration("3s")
+	time.Sleep(t)
+
+	fmt.Println(r.Method)
 }

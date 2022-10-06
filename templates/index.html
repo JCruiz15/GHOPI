@@ -53,9 +53,10 @@
         <div class="row text-center mx-4 mt-4 mb-1">
             <div class="col-md-4 mb-3">
                 <h4>Open Project</h4>
-                <label class="mb-2" for="op_apikey">Api Key:</label><br>
-                <input type="password" id="op_apikey" name="op_apikey"><br>
-                <input class="mt-1 me-1" type="checkbox" onclick="myFunction('op_apikey')"><label class="mt-1" style="font-size: 12px">Show key</label> 
+                <label class="mb-2" for="op_apikey">OpenProject instance URL:</label><br>
+                <input type="text" id="op_url" name="op_url"><br>
+                <!-- <input class="mt-1 me-1" type="checkbox" onclick="myFunction('op_apikey')"><label class="mt-1" style="font-size: 12px">Show key</label>  -->
+                <a href="/op/login">LOGIN</a>
             </div>
             <div class="col-md-4 mb-3">
                 <h4>Github</h4>
@@ -69,15 +70,15 @@
             <div class="col-md-4 mb-3">
                 <h4>Gitlab</h4>
                 <label class="mb-2" for="gl_user">User:</label><br>
-                <input type="text" id="gl_user" name="gluser"><br>
+                <input type="text" id="gl_user" name="gluser" disabled><br>
                 <label class="mb-2" for="gl_apikey">Api Key:</label><br>
-                <input type="password" id="gl_apikey" name="gl_apikey"><br>
-                <input class="mt-1 me-1" type="checkbox" onclick="myFunction('gl_apikey')"><label class="mt-1" style="font-size: 12px">Show key</label> 
+                <input type="password" id="gl_apikey" name="gl_apikey" disabled><br>
+                <input class="mt-1 me-1" type="checkbox" onclick="myFunction('gl_apikey')" disabled><label class="mt-1" style="font-size: 12px">Show key</label> 
             </div>
         </div>
         <div class="row text-center">
             <div class="col-md-12">
-                <input type="submit" name="submit" value="Upload">
+                <input type="submit" name="submit" value="Upload" disabled>
             </div>
         </div>
     </form>
