@@ -8,61 +8,75 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
 )
 
-// TODO - Change directories for openproject
+// var randomS uuid.UUID
 
-type OpenProject struct {
+// TODO - Change obtention of clientDI and states
+
+type Openproject struct {
 	*AbstractApplication
 	states   map[string]string
 	clientID string
 	secretID string
 }
 
-func NewOpenProject() *OpenProject {
+func NewOpenproject() *Openproject {
 	a := &AbstractApplication{}
 	s := make(map[string]string)
 
 	clientID, exists := os.LookupEnv("OPENPROJECT_CLIENTID")
 	if !exists {
-		log.Fatal("Open Project Client ID not defined in .env file")
+		log.Fatal("OpenProject Client ID not defined in .env file")
 	}
 	clientSecret, exists := os.LookupEnv("OPENPROJECT_SECRETID")
 	if !exists {
-		log.Fatal("Open Project Secret ID not defined in .env file")
+		log.Fatal("OpenProject Secret ID not defined in .env file")
 	}
+	r := &Openproject{a, s, clientID, clientSecret}
 
-	r := &OpenProject{a, s, clientID, clientSecret}
 	a.Application = r
 	return r
 }
 
-func (op OpenProject) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data string, Token string) {
+func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data string, Token string) {
 	if Data == "" {
 		fmt.Fprint(w, "UNAUTHORIZED")
 		return
 	}
 
+	// w.Header().Set("Content-type", "application/json")
+	// var prettyJSON bytes.Buffer
+	// parser := json.Indent(&prettyJSON, []byte(Data), "", "\t")
+	// if parser != nil {
+	// 	log.Panic("JSON parse error")
+	// }
+
 	http.Redirect(w, r, "http://localhost:5002", http.StatusMovedPermanently)
 }
 
-func (op OpenProject) LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
+
 	s := uuid.New().String()
 	op.states[fmt.Sprint(len(op.states))] = s
+
 	redirectURL := fmt.Sprintf(
-		"http://localhost:8080/oauth/authorize?response_type=code&client_id=%s&scope=%s&redirect_uri=%s&prompt=consent", // TODO - Change localhost, for user input
+		"http://localhost:8080/oauth/authorize?response_type=code&client_id=%s&scope=%s&redirect_uri=%s&prompt=consent",
 		op.clientID,
 		"api_v3",
-		fmt.Sprintf("http://localhost:5002/github/login/callback&state=%s", s), // TODO - Change root url, dinamic
+		// "http://localhost:5002/op/login/callback",
+		fmt.Sprintf("http://localhost:5002/op/login/callback?state=%s", s),
 	)
+
 	http.Redirect(w, r, redirectURL, http.StatusMovedPermanently)
 }
 
-func (op OpenProject) getAccessToken(code string) string {
+func (op *Openproject) getAccessToken(code string) string {
 	requestBody := url.Values{}
 	requestBody.Set("grant_type", "authorization_code")
 	requestBody.Set("client_id", op.clientID)
@@ -81,7 +95,7 @@ func (op OpenProject) getAccessToken(code string) string {
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Content-Length", strconv.Itoa(len(requestBodyEnc)))
+	req.Header.Set("Content-Length", strconv.Itoa(len(requestBodyEnc)))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -89,7 +103,6 @@ func (op OpenProject) getAccessToken(code string) string {
 	}
 
 	respbody, _ := io.ReadAll(resp.Body)
-	fmt.Println(resp.StatusCode)
 
 	type AccessTokenResponse struct {
 		AccessToken  string `json:"access_token"`
@@ -102,11 +115,10 @@ func (op OpenProject) getAccessToken(code string) string {
 
 	var finalresp AccessTokenResponse
 	json.Unmarshal(respbody, &finalresp)
-
 	return finalresp.AccessToken
 }
 
-func (op OpenProject) getData(accessToken string) map[string]string {
+func (op *Openproject) getData(accessToken string) map[string]string {
 	req, err := http.NewRequest(
 		"GET",
 		"http://localhost:8080/api/v3/users/me",
@@ -127,25 +139,49 @@ func (op OpenProject) getData(accessToken string) map[string]string {
 	respbody, _ := io.ReadAll(resp.Body)
 	var jsonMap map[string]string
 	json.Unmarshal(respbody, &jsonMap)
-
 	return jsonMap
 }
 
-func (op OpenProject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
+func (op *Openproject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	security := r.URL.Query().Get("state")
 	secured := false
+	fmt.Println(op.states)
 	for key, value := range op.states {
+		fmt.Println(security)
+		fmt.Println(op.states)
 		if value == security {
 			fmt.Println("Secure transaction")
 			secured = true
 			delete(op.states, key)
 		}
 	}
-	if !secured {
-		log.Panic("Third party system connection")
+	fmt.Println(secured)
+	// if !secured {
+	// 	_, err := os.Open(".tokens.txt")
+	// 	if err != nil {
+	// 		fmt.Println("Error - no access")
+	// 		return
+	// 		// log.Panic("Third party system access attempt")
+	// 	}
+	// 	// log.Panic("Third party system connection")
+	// 	fmt.Print("ERROR")
+	// 	fmt.Println(gh.states)
+	// }
+
+	AccessToken := op.getAccessToken(code)
+	Data := op.getData(AccessToken)
+
+	wd, _ := os.Getwd()
+	path := filepath.Join(wd, ".tokens", fmt.Sprintf("openproject-%s", Data["name"]))
+	path = strings.Replace(path, " ", "_", -1)
+	f, err := os.Create(path)
+	if err != nil {
+		fmt.Println(err.Error())
 	}
-	AccessToken := OpenProject.getAccessToken(OpenProject{}, code)
-	Data := OpenProject.getData(OpenProject{}, AccessToken)
-	OpenProject.LoggedinHandler(OpenProject{}, w, r, Data["user"], AccessToken)
+	defer f.Close()
+
+	f.Write([]byte(AccessToken))
+
+	op.LoggedinHandler(w, r, Data["name"], AccessToken)
 }

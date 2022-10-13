@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -61,6 +62,7 @@ func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data st
 func (gh *Github) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	s := uuid.New().String()
+	fmt.Print(s)
 	gh.states[fmt.Sprint(len(gh.states))] = s
 
 	redirectURL := fmt.Sprintf(
@@ -142,11 +144,6 @@ func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	security := r.URL.Query().Get("state")
 	secured := false
 	for key, value := range gh.states {
-		fmt.Print(key)
-		fmt.Print(" - ")
-		fmt.Println(value)
-		fmt.Println(security)
-		fmt.Println(value == security)
 		if value == security {
 			fmt.Println("Secure transaction")
 			secured = true
@@ -169,18 +166,16 @@ func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	AccessToken := gh.getAccessToken(code)
 	Data := gh.getData(AccessToken)
 
-	fmt.Println(Data)
-	// Escribir id del usuario de github
 	wd, _ := os.Getwd()
-	path := filepath.Join(wd, ".tokens", fmt.Sprintf("%s-github", Data["login"]))
+	path := filepath.Join(wd, ".tokens", fmt.Sprintf("github-%s", Data["login"]))
+	path = strings.Replace(path, " ", "_", -1)
 	f, err := os.Create(path)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 	defer f.Close()
 
-	n, _ := f.Write([]byte(AccessToken))
-	fmt.Println(n)
+	f.Write([]byte(AccessToken))
 
 	gh.LoggedinHandler(w, r, Data["login"], AccessToken)
 }

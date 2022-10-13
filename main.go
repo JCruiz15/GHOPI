@@ -37,7 +37,7 @@ func init() {
 
 func main() {
 	var github applications.Github = *applications.NewGithub()
-	var openproject applications.OpenProject = *applications.NewOpenProject()
+	var openproject applications.Openproject = *applications.NewOpenproject()
 
 	fileServer := http.FileServer(http.Dir("./static"))
 
