@@ -1,19 +1,24 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
+	"io"
 	"net/http"
+	"os"
+	"strings"
 	"text/template"
 	"time"
 
 	"web-service-gin/applications"
+	"web-service-gin/functions"
 
+	"github.com/buger/jsonparser"
 	"github.com/joho/godotenv"
-)
 
-// TODO - Make the decisions via Objects oriented. Request abstract class with children.
+	log "github.com/sirupsen/logrus"
+	easy "github.com/t-tomalak/logrus-easy-formatter"
+	"gopkg.in/natefinch/lumberjack.v2"
+)
 
 // TODO - Rename a task when its branch is renamed and viceversa.
 
@@ -21,15 +26,37 @@ import (
 
 // TODO - Make the documentation
 
-// TODO - Create new url for each new page opened
-
 // TODO - When refresh create a new branch for every new task
 
 // TODO - Api security, prevent XSS, Session tokens etc.
 
-// TODO - Create post buttons for user inputs
+// TODO - Create post buttons for user input
+
+// TODO - Log archive to store changes and show it through webpage
+
+// TODO - Create webhook and customFields through web pushing a button
+
+// TODO - Instead of save Org name in variable, get it from repo url
+
+var repoField string = "customField1"
 
 func init() {
+	log.SetFormatter(&easy.Formatter{
+		TimestampFormat: "02/01/2006-15:04:05",
+		LogFormat:       "[%lvl%] %time% %msg%\n",
+	})
+
+	log.SetOutput(io.MultiWriter(
+		&lumberjack.Logger{
+			Filename:   "outputs.log",
+			MaxSize:    10,
+			MaxBackups: 3,
+			MaxAge:     1,
+			Compress:   true,
+		},
+		os.Stdout,
+	))
+
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("No .env file found")
 	}
@@ -38,14 +65,13 @@ func init() {
 func main() {
 	var github applications.Github = *applications.NewGithub()
 	var openproject applications.Openproject = *applications.NewOpenproject()
-
 	fileServer := http.FileServer(http.Dir("./static"))
 
 	http.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	http.HandleFunc("/", index)
 	http.HandleFunc("/instructions", instructions)
-	http.HandleFunc("/api/openproject", postOpenProject)
+	http.HandleFunc("/api/openproject", PostOpenProject)
 	http.HandleFunc("/api/refresh", refresh)
 
 	http.HandleFunc("/github/login", github.LoginHandler)
@@ -63,7 +89,9 @@ func main() {
 		})
 
 	port := 5002
-	fmt.Printf("Application started on port %d\n", port)
+	log.Info(fmt.Sprintf("Application running on port %d", port))
+	log.Warn("blablas")
+	log.Info(fmt.Sprintf("lfaport %d", port))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
@@ -80,20 +108,36 @@ func instructions(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "instructions")
 }
 
-func postOpenProject(w http.ResponseWriter, r *http.Request) {
+func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
-		b := json.NewDecoder(r.Body)
-		body := map[string]interface{}{}
-		b.Decode(&body)
-		go requestOpenProject(body)
-		fmt.Fprint(w, "POST received")
+		byte_body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		go requestOpenProject(byte_body)
+		log.Info("POST received")
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
 }
 
-func requestOpenProject(body map[string]interface{}) {
-	fmt.Print("DONE")
+func requestOpenProject(data []byte) {
+	repo, err := jsonparser.GetString(data, "work_package", repoField)
+	functions.Check(err, "warn")
+	// a, _ := jsonparser.GetString(data, "work_package", "_embedded")
+	// fmt.Println(a)
+	kind, err2 := jsonparser.GetString(data, "work_package", "_embedded", "type", "name")
+	functions.Check(err2, "warn")
+
+	if kind == "Task" {
+		switch {
+		case strings.Contains(string(repo), "github"):
+			functions.Github_options(data)
+		default:
+			fmt.Println("Repo URL wrongly encoded")
+		}
+	}
 }
 
 func refresh(w http.ResponseWriter, r *http.Request) {

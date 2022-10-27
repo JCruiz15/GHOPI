@@ -1,14 +1,14 @@
 {{define "head"}}
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-<title>Configuration </title>
+<title>Open Sync</title>
 {{end}}
 
 {{define "navbar"}}
 <div class="collapse navbar-collapse" id="menuItems">
     <ul class="navbar-nav me-auto">
         <li class="nav-item">
-            <a href="/instructions" class="nav-link">Instructions</a>
+            <a href="/instructions" class="nav-link">User Manual</a>
         </li>
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="/" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -28,10 +28,10 @@
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item text-lgray" onclick="copyGitlab()" role="button">
+                    <!-- <a class="dropdown-item text-lgray" onclick="copyGitlab()" role="button">
                         <img class="me-1" src="static/img/gitlab_logo.svg" title="gitlab logo" style="width: 20px;height: 20px;">
                         Copy Gitlab endpoint
-                    </a>
+                    </a> -->
                 </li>
             </ul>
         </li>
@@ -49,48 +49,41 @@
 
 {{define "content"}}
 <div class="container-fluid">
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <div class="row text-center mx-4 mt-4 mb-1">
-            <div class="col-md-4 mb-3">
-                <h4>Open Project</h4>
-                <label class="mb-2" for="op_apikey">OpenProject instance URL:</label><br>
+    <div class="row text-center mx-4 mt-4 mb-1">
+        <div class="col-md-6 mb-3">
+            <h4>Open Project</h4>
+            <form action="/op/login" method="post" enctype="multipart/form-data">
+                <label class="mb-2">OpenProject instance URL:</label><br>
                 <input type="text" id="op_url" name="op_url"><br>
                 <!-- <input class="mt-1 me-1" type="checkbox" onclick="myFunction('op_apikey')"><label class="mt-1" style="font-size: 12px">Show key</label>  -->
+                <input class="mt-2" type="submit" name="submit_op" value="Login" disabled>
                 <a href="/op/login">LOGIN</a>
-            </div>
-            <div class="col-md-4 mb-3">
-                <h4>Github</h4>
-                <!-- <label class="mb-2" for="gh_user">User:</label><br>
-                <input type="text" id="gh_user" name="gh_user"><br>
-                <label class="mb-2" for="gh_apikey">Api Key:</label><br>
-                <input type="password" id="gh_apikey" name="gh_apikey"><br>
-                <input class="mt-1 me-1" type="checkbox" onclick="myFunction('gh_apikey')"><label class="mt-1" style="font-size: 12px">Show key</label>  -->
+            </form>
+        </div>
+        <div class="col-md-6 mb-3">
+            <h4>Github</h4>
+            <form action="/op/login" method="post" enctype="multipart/form-data">
+                <label class="mb-2">Github organization name:</label><br>
+                <input type="text" id="gh_org" name="gh_org"><br>
+                <!-- <input class="mt-1 me-1" type="checkbox" onclick="myFunction('op_apikey')"><label class="mt-1" style="font-size: 12px">Show key</label>  -->
+                <input class="mt-2" type="submit" name="submit_gh" value="Login" disabled>
                 <a href="/github/login">LOGIN</a>
-            </div>
-            <div class="col-md-4 mb-3">
-                <h4>Gitlab</h4>
-                <label class="mb-2" for="gl_user">User:</label><br>
-                <input type="text" id="gl_user" name="gluser" disabled><br>
-                <label class="mb-2" for="gl_apikey">Api Key:</label><br>
-                <input type="password" id="gl_apikey" name="gl_apikey" disabled><br>
-                <input class="mt-1 me-1" type="checkbox" onclick="myFunction('gl_apikey')" disabled><label class="mt-1" style="font-size: 12px">Show key</label> 
-            </div>
+            </form>
         </div>
-        <div class="row text-center">
-            <div class="col-md-12">
-                <input type="submit" name="submit" value="Upload" disabled>
-            </div>
-        </div>
-    </form>
-    <div class="row text-center m-4">
-        <div class="col-md-12">
-            <h4>Prompt</h4>
-            <fieldset>
-                hell
-            </fieldset>
-        </div>
+        <!-- <div class="col-md-4 mb-3">
+            <h4>Gitlab</h4>
+            <label class="mb-2" for="gl_user">User:</label><br>
+            <input type="text" id="gl_user" name="gluser" disabled><br>
+            <label class="mb-2" for="gl_apikey">Api Key:</label><br>
+            <input type="password" id="gl_apikey" name="gl_apikey" disabled><br>
+            <input class="mt-1 me-1" type="checkbox" onclick="myFunction('gl_apikey')" disabled><label class="mt-1" style="font-size: 12px">Show key</label> 
+        </div> -->
     </div>
-
+    <!-- <div class="row text-center">
+        <div class="col-md-12">
+            <input type="submit" name="submit" value="Upload" disabled>
+        </div>
+    </div> -->
 </div>
 {{end}}
 

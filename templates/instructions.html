@@ -1,2 +1,54 @@
+{{define "head"}}
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<title>User Manual</title>
+{{end}}
+
+{{define "navbar"}}
+<div class="collapse navbar-collapse" id="menuItems">
+    <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+            <a href="/instructions" class="nav-link">Instructions</a>
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="/" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Copy URL
+            </a>
+            <ul class="dropdown-menu bg-darkgray" aria-labelledby="navbarDropdown">
+                <li>
+                    <a class="dropdown-item text-lgray" onclick="copyOP()" role="button">
+                        <img class="me-1" src="static/img/op_logo.svg" title="open project logo" style="width: 20px;height: 20px;">
+                        Copy Open Project endpoint
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item text-lgray" onclick="copyGithub()" role="button">
+                        <img class="me-1" src="static/img/github_logo.svg" title="github logo" style="width: 20px;height: 20px;">
+                        Copy Github endpoint
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item text-lgray" onclick="copyGitlab()" role="button">
+                        <img class="me-1" src="static/img/gitlab_logo.svg" title="gitlab logo" style="width: 20px;height: 20px;">
+                        Copy Gitlab endpoint
+                    </a>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+<div class="topnav-right">
+    <button type="button" class="btn btn-sync me-3 btn-lg" onclick="loading()">
+        <span class="btn-sync__text">
+            Refresh 
+            <span class="material-symbols-outlined inline-icon">sync</span>
+        </span>
+    </button>
+</div>
+{{end}}
+
 {{define "content"}}
+{{end}}
+
+{{define "scripts"}}
 {{end}}
