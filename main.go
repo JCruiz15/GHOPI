@@ -51,7 +51,7 @@ func init() {
 			Filename:   "outputs.log",
 			MaxSize:    10,
 			MaxBackups: 3,
-			MaxAge:     1,
+			MaxAge:     28,
 			Compress:   true,
 		},
 		os.Stdout,
@@ -90,8 +90,6 @@ func main() {
 
 	port := 5002
 	log.Info(fmt.Sprintf("Application running on port %d", port))
-	log.Warn("blablas")
-	log.Info(fmt.Sprintf("lfaport %d", port))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
@@ -116,7 +114,7 @@ func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		go requestOpenProject(byte_body)
-		log.Info("POST received")
+		log.Info("Open Projet POST received")
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
@@ -125,8 +123,6 @@ func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 func requestOpenProject(data []byte) {
 	repo, err := jsonparser.GetString(data, "work_package", repoField)
 	functions.Check(err, "warn")
-	// a, _ := jsonparser.GetString(data, "work_package", "_embedded")
-	// fmt.Println(a)
 	kind, err2 := jsonparser.GetString(data, "work_package", "_embedded", "type", "name")
 	functions.Check(err2, "warn")
 
@@ -135,7 +131,7 @@ func requestOpenProject(data []byte) {
 		case strings.Contains(string(repo), "github"):
 			functions.Github_options(data)
 		default:
-			fmt.Println("Repo URL wrongly encoded")
+			log.Warn("Repository URL not found or website not supported")
 		}
 	}
 }
