@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/buger/jsonparser"
@@ -24,14 +25,16 @@ func github_createBranch(data []byte) int {
 	branchName, err2 := jsonparser.GetString(data, "work_package", "subject")
 	Check(err2, "warning")
 
-	admin, _ := jsonparser.GetString(data, "work_package", "_embedded", "author", githubUserField)
-	token, err := get_token(admin)
+	f, err := os.Open(".config/config.json")
+	Check(err, "error")
+	config, _ := io.ReadAll(f)
+	token, err := jsonparser.GetString(config, "github-token")
 	if Check(err, "error") {
 		return http.StatusNotFound
 	}
 
 	// Get Last commit
-	sha := get_lastcommit(data, token, repoName, GH_ORG)
+	sha := get_lastcommit(token, repoName, GH_ORG)
 
 	// Post new branch
 	body := map[string]string{
@@ -55,7 +58,7 @@ func github_createBranch(data []byte) int {
 	return resp.StatusCode
 }
 
-func get_lastcommit(data []byte, token string, repoName string, GH_ORG string) string {
+func get_lastcommit(token string, repoName string, GH_ORG string) string {
 	req, _ := http.NewRequest(
 		"GET",
 		fmt.Sprintf("https://api.github.com/repos/%s/%s/commits/main", GH_ORG, repoName),
@@ -65,9 +68,7 @@ func get_lastcommit(data []byte, token string, repoName string, GH_ORG string) s
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Panic("Request failed")
-	}
+	Check(err, "fatal")
 
 	respbody, err := io.ReadAll(resp.Body)
 	Check(err, "error")
@@ -97,8 +98,10 @@ func github_createPR(data []byte) int {
 	desc, err4 := jsonparser.GetString(data, "work_package", "description", "raw")
 	Check(err4, "warning")
 
-	admin, _ := jsonparser.GetString(data, "work_package", "_embedded", "author", githubUserField)
-	token, err := get_token(admin)
+	f, err := os.Open(".config/config.json")
+	Check(err, "error")
+	config, _ := io.ReadAll(f)
+	token, err := jsonparser.GetString(config, "github-token")
 	if Check(err, "error") {
 		return http.StatusNotFound
 	}
@@ -121,9 +124,7 @@ func github_createPR(data []byte) int {
 		fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", GH_ORG, repoName),
 		bytes.NewBuffer(requestJSON),
 	)
-	if err != nil {
-		log.Panic("Request creation failed")
-	}
+	Check(err, "fatal")
 
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 
@@ -177,8 +178,10 @@ func github_readPermission(data []byte) int {
 		strings.NewReader(""),
 	)
 
-	admin, _ := jsonparser.GetString(data, "work_package", "_embedded", "author", githubUserField)
-	token, err := get_token(admin)
+	f, err := os.Open(".config/config.json")
+	Check(err, "error")
+	config, _ := io.ReadAll(f)
+	token, err := jsonparser.GetString(config, "github-token")
 	if Check(err, "error") {
 		return http.StatusNotFound
 	}
@@ -231,8 +234,10 @@ func github_writePermission(data []byte) int {
 		strings.NewReader(""),
 	)
 
-	admin, _ := jsonparser.GetString(data, "work_package", "_embedded", "author", githubUserField)
-	token, err := get_token(admin)
+	f, err := os.Open(".config/config.json")
+	Check(err, "error")
+	config, _ := io.ReadAll(f)
+	token, err := jsonparser.GetString(config, "github-token")
 	if Check(err, "error") {
 		return http.StatusNotFound
 	}

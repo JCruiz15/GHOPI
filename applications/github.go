@@ -5,18 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
+	"web-service-gin/functions"
 
+	"github.com/Jeffail/gabs/v2"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // var randomS uuid.UUID
-
-// TODO - Change obtention of clientDI and states
 
 type Github struct {
 	*AbstractApplication
@@ -43,32 +41,42 @@ func NewGithub() *Github {
 	return r
 }
 
-func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data string, Token string) {
-	if Data == "" {
+func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data map[string]string, Token string) {
+	if Data == nil {
 		fmt.Fprint(w, "UNAUTHORIZED")
 		return
+	} else {
+		var config *gabs.Container
+		config_path := ".config/config.json"
+
+		if _, err := os.Stat(config_path); err == nil {
+			config, err = gabs.ParseJSONFile(config_path)
+			functions.Check(err, "Error")
+		} else {
+			config = gabs.New()
+		}
+
+		config.Set(Data["login"], "github-user")
+		config.Set(Token, "github-token")
+
+		f, err := os.Create(config_path)
+		functions.Check(err, "Error")
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 	}
 
-	// w.Header().Set("Content-type", "application/json")
-	// var prettyJSON bytes.Buffer
-	// parser := json.Indent(&prettyJSON, []byte(Data), "", "\t")
-	// if parser != nil {
-	// 	log.Panic("JSON parse error")
-	// }
-
-	http.Redirect(w, r, "http://localhost:5002", http.StatusMovedPermanently)
+	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
 func (gh *Github) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	s := uuid.New().String()
-	fmt.Print(s)
 	gh.states[fmt.Sprint(len(gh.states))] = s
 
 	redirectURL := fmt.Sprintf(
 		"https://github.com/login/oauth/authorize?client_id=%s&scope=%s&redirect_uri=%s",
 		gh.clientID,
-		"admin:org%20repo",
+		"admin:org%20repo%20admin:org_hook",
 		// "http://localhost:5002/github/login/callback",
 		fmt.Sprintf("http://localhost:5002/github/login/callback&state=%s", s), // TODO - Change root url, dinamic
 	)
@@ -150,7 +158,7 @@ func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 			delete(gh.states, key)
 		}
 	}
-	fmt.Println(secured)
+	fmt.Printf("secured? %t\n", secured)
 	// if !secured {
 	// 	_, err := os.Open(".tokens.txt")
 	// 	if err != nil {
@@ -166,16 +174,5 @@ func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	AccessToken := gh.getAccessToken(code)
 	Data := gh.getData(AccessToken)
 
-	wd, _ := os.Getwd()
-	path := filepath.Join(wd, ".tokens", fmt.Sprintf("github-%s", Data["login"]))
-	path = strings.Replace(path, " ", "_", -1)
-	f, err := os.Create(path)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	defer f.Close()
-
-	f.Write([]byte(AccessToken))
-
-	gh.LoggedinHandler(w, r, Data["login"], AccessToken)
+	gh.LoggedinHandler(w, r, Data, AccessToken)
 }

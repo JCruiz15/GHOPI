@@ -2,3 +2,4 @@
 .tokens
 data.json
 outputs.log
+.config/config.json

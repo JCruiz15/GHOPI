@@ -56,19 +56,19 @@
                 <label class="mb-2">OpenProject instance URL:</label><br>
                 <input type="text" id="op_url" name="op_url"><br>
                 <!-- <input class="mt-1 me-1" type="checkbox" onclick="myFunction('op_apikey')"><label class="mt-1" style="font-size: 12px">Show key</label>  -->
-                <input class="mt-2" type="submit" name="submit_op" value="Login" disabled>
+                <input class="mt-2" type="submit" name="submit_op" value="Login" disabled/>
                 <a href="/op/login">LOGIN</a>
             </form>
         </div>
         <div class="col-md-6 mb-3">
             <h4>Github</h4>
-            <form action="/op/login" method="post" enctype="multipart/form-data">
+            <form action="/github/login" method="post" enctype="multipart/form-data">
                 <label class="mb-2">Github organization name:</label><br>
-                <input type="text" id="gh_org" name="gh_org"><br>
-                <!-- <input class="mt-1 me-1" type="checkbox" onclick="myFunction('op_apikey')"><label class="mt-1" style="font-size: 12px">Show key</label>  -->
-                <input class="mt-2" type="submit" name="submit_gh" value="Login" disabled>
-                <a href="/github/login">LOGIN</a>
+                <input class="mt-2" type="submit" name="submit_gh" value="Login"/>
+                <!-- <a href="/github/login">LOGIN</a></br> -->
             </form>
+            <button class="btn btn-secondary mt-2" type="button" name="gh_webhook" onclick="gh_webhook()">WEBHOOK</button>
+
         </div>
         <!-- <div class="col-md-4 mb-3">
             <h4>Gitlab</h4>
@@ -109,7 +109,59 @@
         theButton.classList.add("btn-sync--loading");
     }
 </script>
+
 <script>
+    async function gh_webhook() {
+        const { value: org } = await Swal.fire({
+            title: 'Enter organization name',
+            input: 'text',
+            inputLabel: 'Organization:',
+            showCancelButton: true,
+            inputValidator: (value) => {
+                if (!value) {
+                return 'You need to write something!'
+                }
+                if (value.includes(" ")) {
+                    return 'Organization names must not have blank spaces'
+                }
+            }
+        })
+        if(org) {
+            const organization = {
+                "organizationName": org
+            };
+
+            function postWebhook(data) {
+                return new Promise(function (resolve, reject){
+                    fetch('/github/webhook', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    })
+                    .then(
+                        (response) => response.json().then(data =>{
+                            resolve(data);
+                        }),
+                        (error) => {reject(error);}
+                    );
+                })
+            }
+
+            var result = await postWebhook(organization)
+            if(result.hasOwnProperty('message')){
+                msg = JSON.stringify(result.errors[0].message)
+                Swal.fire("Webhook creation failed", msg.replace(/["]/g, ""), "error")
+            }
+            else {
+                Swal.fire("Webhook created", "Webhook was created successfully", "success")
+            }  
+        }
+    }
+</script>
+
+<!-- <script>
     function myFunction(id) {
         var x = document.getElementById(id);
         if (x.type === "password") {
@@ -118,5 +170,5 @@
             x.type = "password";
         }
     }
-</script>
+</script> -->
 {{end}}

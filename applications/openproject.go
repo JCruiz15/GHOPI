@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
+	"web-service-gin/functions"
 
+	"github.com/Jeffail/gabs/v2"
 	"github.com/google/uuid"
 )
 
@@ -44,10 +45,28 @@ func NewOpenproject() *Openproject {
 	return r
 }
 
-func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data string, Token string) {
-	if Data == "" {
+func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data map[string]string, Token string) {
+	if Data == nil {
 		fmt.Fprint(w, "UNAUTHORIZED")
 		return
+	} else {
+		var config *gabs.Container
+		config_path := ".config/config.json"
+
+		if _, err := os.Stat(config_path); err == nil {
+			config, err = gabs.ParseJSONFile(config_path)
+			functions.Check(err, "Error")
+		} else {
+			config = gabs.New()
+		}
+
+		config.Set(Data["name"], "openproject-user")
+		config.Set(Token, "openproject-token")
+
+		f, err := os.Create(config_path)
+		functions.Check(err, "Error")
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 	}
 
 	// w.Header().Set("Content-type", "application/json")
@@ -57,7 +76,7 @@ func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, D
 	// 	log.Panic("JSON parse error")
 	// }
 
-	http.Redirect(w, r, "http://localhost:5002", http.StatusMovedPermanently)
+	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
 func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,8 +88,8 @@ func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		"http://localhost:8080/oauth/authorize?response_type=code&client_id=%s&scope=%s&redirect_uri=%s&prompt=consent",
 		op.clientID,
 		"api_v3",
-		// "http://localhost:5002/op/login/callback",
-		fmt.Sprintf("http://localhost:5002/op/login/callback?state=%s", s),
+		"http://localhost:5002/op/login/callback",
+		//fmt.Sprintf("http://localhost:5002/op/login/callback?state=%s", s),
 	)
 
 	http.Redirect(w, r, redirectURL, http.StatusMovedPermanently)
@@ -115,6 +134,7 @@ func (op *Openproject) getAccessToken(code string) string {
 
 	var finalresp AccessTokenResponse
 	json.Unmarshal(respbody, &finalresp)
+
 	return finalresp.AccessToken
 }
 
@@ -144,19 +164,16 @@ func (op *Openproject) getData(accessToken string) map[string]string {
 
 func (op *Openproject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
-	security := r.URL.Query().Get("state")
-	secured := false
-	fmt.Println(op.states)
-	for key, value := range op.states {
-		fmt.Println(security)
-		fmt.Println(op.states)
-		if value == security {
-			fmt.Println("Secure transaction")
-			secured = true
-			delete(op.states, key)
-		}
-	}
-	fmt.Println(secured)
+	// security := r.URL.Query().Get("state")
+	// secured := false
+	// for key, value := range op.states {
+	// 	if value == security {
+	// 		fmt.Println("Secure transaction")
+	// 		secured = true
+	// 		delete(op.states, key)
+	// 	}
+	// }
+	// fmt.Println(secured)
 	// if !secured {
 	// 	_, err := os.Open(".tokens.txt")
 	// 	if err != nil {
@@ -172,16 +189,5 @@ func (op *Openproject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	AccessToken := op.getAccessToken(code)
 	Data := op.getData(AccessToken)
 
-	wd, _ := os.Getwd()
-	path := filepath.Join(wd, ".tokens", fmt.Sprintf("openproject-%s", Data["name"]))
-	path = strings.Replace(path, " ", "_", -1)
-	f, err := os.Create(path)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	defer f.Close()
-
-	f.Write([]byte(AccessToken))
-
-	op.LoggedinHandler(w, r, Data["name"], AccessToken)
+	op.LoggedinHandler(w, r, Data, AccessToken)
 }

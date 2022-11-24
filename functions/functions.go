@@ -1,10 +1,8 @@
 package functions
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
-	"io"
-	"os"
 	"strings"
 
 	"github.com/buger/jsonparser"
@@ -33,16 +31,6 @@ func Check(err error, level string) bool {
 	}
 }
 
-func get_token(usr string) (string, error) {
-	tokenF, err := os.Open(fmt.Sprintf(".tokens/github-%s", usr))
-	if err != nil {
-		return "", errors.New("token not found or expired: log in with our website ([url])")
-	}
-	defer tokenF.Close()
-	token, _ := io.ReadAll(tokenF)
-	return string(token), nil
-}
-
 // ====== GITHUB ======
 
 func Github_options(data []byte) {
@@ -56,7 +44,6 @@ func Github_options(data []byte) {
 	case "work_package:updated":
 		status, errStatus := jsonparser.GetString(data, "work_package", "_embedded", "status", "name")
 		Check(errStatus, "warning")
-		fmt.Println(status)
 		switch status {
 		case "On hold":
 			github_writePermission(data)
@@ -65,6 +52,49 @@ func Github_options(data []byte) {
 			github_readPermission(data)
 		default:
 			github_writePermission(data)
+		}
+	}
+}
+
+// ====== OPENPROJECT ======
+
+func Openproject_options(data []byte) {
+	all := make(map[string]interface{})
+	json.Unmarshal(data, &all)
+
+	if _, ok := all["pull_request"]; ok {
+		pr_title, _ := jsonparser.GetString(data, "pull_request", "title")
+		action, _ := jsonparser.GetString(data, "action")
+		switch action {
+		case "opened":
+			openproject_PR_msg(
+				data,
+				fmt.Sprintf("[%s] Pull request was opened", pr_title),
+			)
+		case "closed":
+			openproject_PR_msg(
+				data,
+				fmt.Sprintf("[%s] Pull request was closed. Task may be closed too", pr_title),
+			)
+		case "reopened":
+			openproject_PR_msg(
+				data,
+				fmt.Sprintf("[%s] Pull request was reopened. Task may be reopened too", pr_title),
+			)
+		}
+	} else if _, ok := all["deleted"]; ok {
+		deleted, _ := jsonparser.GetBoolean(data, "deleted")
+		if deleted {
+			b_title, _ := jsonparser.GetString(data, "ref")
+			b := strings.Split(b_title, "/")
+			branch := b[len(b)-1]
+
+			// openproject_task_msg(
+			// 	data,
+			// 	fmt.Sprintf("[%s] Branch was deleted. This task may be rejected", branch),
+			// )
+
+			log.Info(fmt.Sprintf("Branch [%s] has been deleted", branch))
 		}
 	}
 }

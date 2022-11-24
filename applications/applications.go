@@ -3,7 +3,7 @@ package applications
 import "net/http"
 
 type Application interface {
-	LoggedinHandler(http.ResponseWriter, *http.Request, string, string)
+	LoggedinHandler(http.ResponseWriter, *http.Request, map[string]string, string)
 	LoginHandler(http.ResponseWriter, *http.Request)
 	getAccessToken(string) string
 	getData(string) map[string]string
