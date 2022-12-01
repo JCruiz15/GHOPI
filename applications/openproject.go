@@ -16,10 +16,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// var randomS uuid.UUID
-
-// TODO - Change obtention of clientDI and states
-
 type Openproject struct {
 	*AbstractApplication
 	states   map[string]string

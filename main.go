@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"strings"
@@ -22,21 +23,27 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-// TODO - Rename a task when its branch is renamed and viceversa.
+// TODO - CUIDADO con las tareas SIN REPOSITORIO
 
-// TODO - Receive webhooks from gitlab.
+// TODO - Rename a task when its branch is renamed and viceversa.
 
 // TODO - Make the documentation
 
-// TODO - When refresh create a new branch for every new task
-
-// TODO - Api security, prevent XSS, Session tokens etc.
+// TODO - Api security, prevent XSS, etc.
 
 // TODO - Create post buttons for user input
 
-// TODO - Create webhook and customFields through web pushing a button
+// TODO - Create customFields through web pushing a button
 
 // TODO - Cerrar los body de las req, para no leakear información
+
+// TODO - Crear el webhook button para openproject
+
+// TODO - Si no se inserta el nombre de la URL de OP se asume que es localhost:8080 sino se debe insertar en el config.json o mediante la web.
+
+// TODO - Hacer una función para checkear el estado de los tokens
+
+// TODO - Revisar github_functions/get_branch
 
 var repoField string = "customField1"
 
@@ -76,7 +83,7 @@ func main() {
 
 	http.HandleFunc("/api/openproject", PostOpenProject)
 	http.HandleFunc("/api/github", PostGithub)
-	http.HandleFunc("/api/refresh", refresh)
+	http.HandleFunc("/api/refresh", refresh_proxy)
 
 	http.HandleFunc("/github/login", github.LoginHandler)
 	http.HandleFunc("/github/login/callback", github.CallbackHandler)
@@ -117,6 +124,7 @@ func logs(w http.ResponseWriter, _ *http.Request) {
 	tpl.Execute(w, nil)
 }
 
+// TODO - Llevarlo a una funcion en functions
 func github_webhook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var orgName string = ""
@@ -175,7 +183,12 @@ func github_webhook(w http.ResponseWriter, r *http.Request) {
 		}
 		r, _ := io.ReadAll(resp.Body)
 
-		fmt.Println(string(r))
+		name, getErr := jsonparser.GetString(r, "name")
+		functions.Check(getErr, "error")
+		if name == "web" {
+			id, _ := jsonparser.GetInt(r, "id")
+			log.Info(fmt.Sprintf("Github webhook created with id %d", id))
+		}
 
 		w.Write(r)
 
@@ -184,7 +197,6 @@ func github_webhook(w http.ResponseWriter, r *http.Request) {
 			"message": "Webhook creation failed: Wrong http method or Organization name not received",
 			"status":  http.StatusInternalServerError,
 		}
-
 		resul, _ := json.Marshal(output)
 		w.Write(resul)
 	}
@@ -194,6 +206,8 @@ func github_webhook(w http.ResponseWriter, r *http.Request) {
 func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		byte_body, err := io.ReadAll(r.Body)
+		// fmt.Println(string(byte_body))
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -235,10 +249,33 @@ func PostGithub(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func refresh(w http.ResponseWriter, r *http.Request) {
-	var t time.Duration
-	t, _ = time.ParseDuration("3s")
-	time.Sleep(t)
+func refresh_proxy(w http.ResponseWriter, _ *http.Request) {
+	var lastRefresh time.Time
+	lastRefresh_path := ".config/lastRefresh.txt"
 
-	fmt.Println(r.Method)
+	if _, err := os.Stat(lastRefresh_path); err == nil {
+		lr, err := os.Open(lastRefresh_path)
+		functions.Check(err, "Error")
+		read_lr, _ := io.ReadAll(lr)
+		if string(read_lr) != "" {
+			var parseError error
+			lastRefresh, parseError = time.Parse("2006-01-02T15:04:05Z", string(read_lr))
+			functions.Check(parseError, "error")
+		} else {
+			lastRefresh = time.Date(2000, 1, 1, 0, 0, 1, 0, time.UTC) // Set lastRefresh to 2000-01-01T00:00:01.0Z
+			os.WriteFile(lastRefresh_path, []byte(lastRefresh.Format("2006-01-02T15:04:05Z")), fs.FileMode(os.O_TRUNC))
+		}
+	} else {
+		lastRefresh = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC) // Set lastRefresh to 2000-01-01T00:00:00.0Z
+		_, err := os.Create(lastRefresh_path)
+		functions.Check(err, "error")
+		os.WriteFile(lastRefresh_path, []byte(lastRefresh.Format("2006-01-02T15:04:05Z")), fs.FileMode(os.O_TRUNC))
+	}
+	// w.Write([]byte("This is an inoffensive message"))
+	// Add result to the function so we can give feedback
+	c := make(chan string)
+	go functions.Refresh(lastRefresh, c)
+	result := <-c
+
+	w.Write([]byte(result))
 }

@@ -13,6 +13,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type permission string
+
+const (
+	WRITE permission = "push"
+	READ  permission = "pull"
+)
+
 func github_createBranch(data []byte) int {
 	// Get repository
 	repo, err := jsonparser.GetString(data, "work_package", repoField)
@@ -33,25 +40,28 @@ func github_createBranch(data []byte) int {
 		return http.StatusNotFound
 	}
 
+	return createbranch(token, repoName, GH_ORG, branchName)
+}
+
+func createbranch(token string, repoName string, orgName string, subject string) int {
 	// Get Last commit
-	sha := get_lastcommit(token, repoName, GH_ORG)
+	sha := get_lastcommit(token, repoName, orgName)
+	subject = strings.Replace(subject, " ", "-", -1)
 
 	// Post new branch
 	body := map[string]string{
-		"ref": fmt.Sprintf("refs/heads/%s", branchName),
+		"ref": fmt.Sprintf("refs/heads/%s", subject),
 		"sha": sha,
 	}
 	requestJSON, _ := json.Marshal(body)
-
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("https://api.github.com/repos/%s/%s/git/refs", GH_ORG, repoName),
+		fmt.Sprintf("https://api.github.com/repos/%s/%s/git/refs", orgName, repoName),
 		bytes.NewBuffer(requestJSON),
 	)
 	Check(err, "error")
-
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
-
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Accept", "application/vnd.github+json")
 	resp, err := http.DefaultClient.Do(req)
 	Check(err, "fatal")
 
@@ -194,24 +204,7 @@ func github_readPermission(data []byte) int {
 	user, err := jsonparser.GetString(respbody, githubUserField)
 	Check(err, "error")
 
-	body := map[string]string{
-		"permission": "pull",
-	}
-	jsonBody, _ := json.Marshal(body)
-
-	req_perm, _ := http.NewRequest(
-		"PUT",
-		fmt.Sprintf("https://api.github.com/repos/%s/%s/collaborators/%s", GH_ORG, repo, user),
-		bytes.NewBuffer(jsonBody),
-	)
-
-	req_perm.Header.Set("Authorization", fmt.Sprintf("token %s", token))
-
-	resp_perm, err := http.DefaultClient.Do(req_perm)
-	Check(err, "fatal")
-
-	log.Info(fmt.Sprintf("%s have got write permissions in %s repository", user, repo))
-	return resp_perm.StatusCode
+	return givePermission(GH_ORG, repo, user, READ, token)
 }
 
 func github_writePermission(data []byte) int {
@@ -250,14 +243,19 @@ func github_writePermission(data []byte) int {
 	user, err := jsonparser.GetString(respbody, githubUserField)
 	Check(err, "error")
 
+	return givePermission(GH_ORG, repo, user, WRITE, token)
+
+}
+
+func givePermission(organization string, repo string, user string, slope permission, token string) int {
 	body := map[string]string{
-		"permission": "push",
+		"permission": string(slope),
 	}
 	jsonBody, _ := json.Marshal(body)
 
 	req_perm, _ := http.NewRequest(
 		"PUT",
-		fmt.Sprintf("https://api.github.com/repos/%s/%s/collaborators/%s", GH_ORG, repo, user),
+		fmt.Sprintf("https://api.github.com/repos/%s/%s/collaborators/%s", organization, repo, user),
 		bytes.NewBuffer(jsonBody),
 	)
 
@@ -266,6 +264,10 @@ func github_writePermission(data []byte) int {
 	resp_perm, err := http.DefaultClient.Do(req_perm)
 	Check(err, "fatal")
 
-	log.Info(fmt.Sprintf("%s have got write permissions in %s repository", user, repo))
+	if resp_perm.StatusCode >= 200 && resp_perm.StatusCode <= 299 {
+		log.Info(fmt.Sprintf("%s have got write permissions in %s repository", user, repo))
+	} else {
+		log.Error(fmt.Sprintf("Error %d: Could not give %s permissions", resp_perm.StatusCode, slope))
+	}
 	return resp_perm.StatusCode
 }
