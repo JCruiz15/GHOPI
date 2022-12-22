@@ -45,6 +45,8 @@ import (
 
 // TODO - Revisar github_functions/get_branch
 
+// TODO - Check if tasks closed need a branch too or not
+
 var repoField string = "customField1"
 
 func init() {
@@ -70,6 +72,7 @@ func init() {
 }
 
 func main() {
+	functions.CheckCustomFields()
 	var github applications.Github = *applications.NewGithub()
 	var openproject applications.Openproject = *applications.NewOpenproject()
 
@@ -185,11 +188,11 @@ func github_webhook(w http.ResponseWriter, r *http.Request) {
 
 		name, getErr := jsonparser.GetString(r, "name")
 		functions.Check(getErr, "error")
+
 		if name == "web" {
 			id, _ := jsonparser.GetInt(r, "id")
 			log.Info(fmt.Sprintf("Github webhook created with id %d", id))
 		}
-
 		w.Write(r)
 
 	} else {
@@ -230,7 +233,7 @@ func requestOpenProject(data []byte) {
 		case strings.Contains(string(repo), "github"):
 			functions.Github_options(data)
 		default:
-			log.Warn("Repository URL not found or website not supported")
+			log.Warn("Repository website not supported")
 		}
 	}
 }
@@ -271,8 +274,6 @@ func refresh_proxy(w http.ResponseWriter, _ *http.Request) {
 		functions.Check(err, "error")
 		os.WriteFile(lastRefresh_path, []byte(lastRefresh.Format("2006-01-02T15:04:05Z")), fs.FileMode(os.O_TRUNC))
 	}
-	// w.Write([]byte("This is an inoffensive message"))
-	// Add result to the function so we can give feedback
 	c := make(chan string)
 	go functions.Refresh(lastRefresh, c)
 	result := <-c

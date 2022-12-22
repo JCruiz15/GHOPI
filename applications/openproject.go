@@ -71,12 +71,18 @@ func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, D
 	// if parser != nil {
 	// 	log.Panic("JSON parse error")
 	// }
+	// URL := fmt.Sprintf("https://%s", r.Host)
 
 	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
 func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
-
+	var URL string = "http://localhost:5002"
+	// if strings.Contains(r.Host, "localhost") {
+	// 	URL = fmt.Sprintf("http://%s", r.Host)
+	// } else {
+	// 	URL = fmt.Sprintf("https://%s", r.Host)
+	// }
 	s := uuid.New().String()
 	op.states[fmt.Sprint(len(op.states))] = s
 
@@ -84,20 +90,20 @@ func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		"http://localhost:8080/oauth/authorize?response_type=code&client_id=%s&scope=%s&redirect_uri=%s&prompt=consent",
 		op.clientID,
 		"api_v3",
-		"http://localhost:5002/op/login/callback",
+		fmt.Sprintf("%s/op/login/callback", URL),
 		//fmt.Sprintf("http://localhost:5002/op/login/callback?state=%s", s),
 	)
 
 	http.Redirect(w, r, redirectURL, http.StatusMovedPermanently)
 }
 
-func (op *Openproject) getAccessToken(code string) string {
+func (op *Openproject) getAccessToken(code string, URL string) string {
 	requestBody := url.Values{}
 	requestBody.Set("grant_type", "authorization_code")
 	requestBody.Set("client_id", op.clientID)
 	requestBody.Set("client_secret", op.secretID)
 	requestBody.Set("code", code)
-	requestBody.Set("redirect_uri", "http://localhost:5002/op/login/callback") // TODO - Change root url, dinamic
+	requestBody.Set("redirect_uri", fmt.Sprintf("%s/op/login/callback", URL))
 	requestBodyEnc := requestBody.Encode()
 
 	req, err := http.NewRequest(
@@ -118,6 +124,8 @@ func (op *Openproject) getAccessToken(code string) string {
 	}
 
 	respbody, _ := io.ReadAll(resp.Body)
+
+	fmt.Println(string(respbody))
 
 	type AccessTokenResponse struct {
 		AccessToken  string `json:"access_token"`
@@ -160,6 +168,7 @@ func (op *Openproject) getData(accessToken string) map[string]string {
 
 func (op *Openproject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
+	fmt.Println(code)
 	// security := r.URL.Query().Get("state")
 	// secured := false
 	// for key, value := range op.states {
@@ -182,7 +191,13 @@ func (op *Openproject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// 	fmt.Println(gh.states)
 	// }
 
-	AccessToken := op.getAccessToken(code)
+	var URL string = "http://localhost:5002"
+	// if strings.Contains(r.Host, "localhost") {
+	// 	URL = fmt.Sprintf("http://%s", r.Host)
+	// } else {
+	// 	URL = fmt.Sprintf("https://%s", r.Host)
+	// }
+	AccessToken := op.getAccessToken(code, URL)
 	Data := op.getData(AccessToken)
 
 	op.LoggedinHandler(w, r, Data, AccessToken)

@@ -154,7 +154,7 @@
 
             var result = await postWebhook(organization)
             if(result.hasOwnProperty('message')){
-                msg = JSON.stringify(result.errors[0].message)
+                msg = JSON.stringify(JSON.parse(JSON.stringify(result)).message)
                 Swal.fire("Webhook creation failed", msg.replace(/["]/g, ""), "error")
             }
             else {

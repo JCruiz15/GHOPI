@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"web-service-gin/functions"
 
 	"github.com/Jeffail/gabs/v2"
@@ -64,12 +65,18 @@ func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data ma
 		defer f.Close()
 		f.Write(config.BytesIndent("", "\t"))
 	}
+	// URL := fmt.Sprintf("https://%s", r.Host)
 
 	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
 func (gh *Github) LoginHandler(w http.ResponseWriter, r *http.Request) {
-
+	var URL string
+	if strings.Contains(r.Host, "localhost") {
+		URL = fmt.Sprintf("http://%s", r.Host)
+	} else {
+		URL = fmt.Sprintf("https://%s", r.Host)
+	}
 	s := uuid.New().String()
 	gh.states[fmt.Sprint(len(gh.states))] = s
 
@@ -78,13 +85,13 @@ func (gh *Github) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		gh.clientID,
 		"admin:org%20repo%20admin:org_hook",
 		// "http://localhost:5002/github/login/callback",
-		fmt.Sprintf("http://localhost:5002/github/login/callback&state=%s", s), // TODO - Change root url, dinamic
+		fmt.Sprintf("%s/github/login/callback&state=%s", URL, s),
 	)
 
 	http.Redirect(w, r, redirectURL, http.StatusMovedPermanently)
 }
 
-func (gh Github) getAccessToken(code string) string {
+func (gh Github) getAccessToken(code string, URL string) string {
 	requestBodyMap := map[string]string{
 		"client_id":     gh.clientID,
 		"client_secret": gh.secretID,
@@ -171,7 +178,9 @@ func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// 	fmt.Println(gh.states)
 	// }
 
-	AccessToken := gh.getAccessToken(code)
+	URL := fmt.Sprintf("https://%s", r.Host)
+
+	AccessToken := gh.getAccessToken(code, URL)
 	Data := gh.getData(AccessToken)
 
 	gh.LoggedinHandler(w, r, Data, AccessToken)

@@ -88,85 +88,85 @@ func get_lastcommit(token string, repoName string, GH_ORG string) string {
 	return sha
 }
 
-func github_createPR(data []byte) int {
-	// Get repository
-	repo, err := jsonparser.GetString(data, "work_package", repoField)
-	Check(err, "warning")
-	r := strings.Split(repo, "/")
-	repoName := r[len(r)-1]
-	GH_ORG := r[len(r)-1]
+// func github_createPR(data []byte) int {
+// 	// Get repository
+// 	repo, err := jsonparser.GetString(data, "work_package", repoField)
+// 	Check(err, "warning")
+// 	r := strings.Split(repo, "/")
+// 	repoName := r[len(r)-1]
+// 	GH_ORG := r[len(r)-1]
 
-	// Get name of task
-	subject, err2 := jsonparser.GetString(data, "work_package", "subject")
-	Check(err2, "warning")
+// 	// Get name of task
+// 	subject, err2 := jsonparser.GetString(data, "work_package", "subject")
+// 	Check(err2, "warning")
 
-	// Get id of task
-	id, err3 := jsonparser.GetInt(data, "work_package", "id")
-	Check(err3, "warning")
+// 	// Get id of task
+// 	id, err3 := jsonparser.GetInt(data, "work_package", "id")
+// 	Check(err3, "warning")
 
-	// Get description of task
-	desc, err4 := jsonparser.GetString(data, "work_package", "description", "raw")
-	Check(err4, "warning")
+// 	// Get description of task
+// 	desc, err4 := jsonparser.GetString(data, "work_package", "description", "raw")
+// 	Check(err4, "warning")
 
-	f, err := os.Open(".config/config.json")
-	Check(err, "error")
-	config, _ := io.ReadAll(f)
-	token, err := jsonparser.GetString(config, "github-token")
-	if Check(err, "error") {
-		return http.StatusNotFound
-	}
+// 	f, err := os.Open(".config/config.json")
+// 	Check(err, "error")
+// 	config, _ := io.ReadAll(f)
+// 	token, err := jsonparser.GetString(config, "github-token")
+// 	if Check(err, "error") {
+// 		return http.StatusNotFound
+// 	}
 
-	// Get branch
-	branch := get_branch(data, token, repoName, subject, GH_ORG)
+// 	// Get branch
+// 	branch := get_branch(data, token, repoName, subject, GH_ORG)
 
-	// Body for request
+// 	// Body for request
 
-	bodyMap := map[string]string{
-		"title": fmt.Sprintf("%s[%d]", subject, id),
-		"body":  desc,
-		"head":  branch,
-		"base":  "main",
-	}
-	requestJSON, _ := json.Marshal(bodyMap)
+// 	bodyMap := map[string]string{
+// 		"title": fmt.Sprintf("%s[%d]", subject, id),
+// 		"body":  desc,
+// 		"head":  branch,
+// 		"base":  "main",
+// 	}
+// 	requestJSON, _ := json.Marshal(bodyMap)
 
-	req, err := http.NewRequest(
-		"POST",
-		fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", GH_ORG, repoName),
-		bytes.NewBuffer(requestJSON),
-	)
-	Check(err, "fatal")
+// 	req, err := http.NewRequest(
+// 		"POST",
+// 		fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", GH_ORG, repoName),
+// 		bytes.NewBuffer(requestJSON),
+// 	)
+// 	Check(err, "fatal")
 
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+// 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 
-	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal")
+// 	resp, err := http.DefaultClient.Do(req)
+// 	Check(err, "fatal")
 
-	return resp.StatusCode
+// 	return resp.StatusCode
 
-}
+// }
 
-func get_branch(data []byte, token string, repoName string, subject string, GH_ORG string) string {
-	req, _ := http.NewRequest(
-		"GET",
-		fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s", GH_ORG, repoName, subject),
-		strings.NewReader(""),
-	)
+// func get_branch(data []byte, token string, repoName string, subject string, GH_ORG string) string {
+// 	req, _ := http.NewRequest(
+// 		"GET",
+// 		fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s", GH_ORG, repoName, subject),
+// 		strings.NewReader(""),
+// 	)
 
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+// 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 
-	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal")
-	respbody, err := io.ReadAll(resp.Body)
-	Check(err, "error")
-	var branch string
-	branch, err_notFound := jsonparser.GetString(respbody, "name")
-	if err_notFound != nil {
-		github_createBranch(data)
-		branch = subject
-	}
+// 	resp, err := http.DefaultClient.Do(req)
+// 	Check(err, "fatal")
+// 	respbody, err := io.ReadAll(resp.Body)
+// 	Check(err, "error")
+// 	var branch string
+// 	branch, err_notFound := jsonparser.GetString(respbody, "name")
+// 	if err_notFound != nil {
+// 		github_createBranch(data)
+// 		branch = subject
+// 	}
 
-	return branch
-}
+// 	return branch
+// }
 
 func github_readPermission(data []byte) int {
 	assigneeRef, err := jsonparser.GetString(data, "work_package", "_links", "assignee", "href")
