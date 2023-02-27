@@ -22,35 +22,39 @@ const (
 
 func github_createBranch(data []byte) int {
 	// Get repository
-	repo, err := jsonparser.GetString(data, "work_package", repoField)
+	repo, err := jsonparser.GetString(data, "work_package", RepoField)
 	Check(err, "warning")
 	r := strings.Split(repo, "/")
 	repoName := r[len(r)-1]
 	GH_ORG := r[len(r)-2]
 
 	// Get name of task
-	branchName, err2 := jsonparser.GetString(data, "work_package", "subject")
+	branchName, err2 := jsonparser.GetString(data, "work_package", SourceBranchField)
+	Check(err2, "warning")
+	targetBranch, err2 := jsonparser.GetString(data, "work_package", TargetBranchField)
 	Check(err2, "warning")
 
 	f, err := os.Open(".config/config.json")
 	Check(err, "error")
 	config, _ := io.ReadAll(f)
 	token, err := jsonparser.GetString(config, "github-token")
+
 	if Check(err, "error") {
 		return http.StatusNotFound
 	}
 
-	return createbranch(token, repoName, GH_ORG, branchName)
+	return createbranch(token, repoName, GH_ORG, branchName, targetBranch)
 }
 
-func createbranch(token string, repoName string, orgName string, subject string) int {
+func createbranch(token string, repoName string, orgName string, source string, target string) int {
 	// Get Last commit
-	sha := get_lastcommit(token, repoName, orgName)
-	subject = strings.Replace(subject, " ", "-", -1)
+
+	sha := get_lastcommit(token, repoName, orgName, target)
+	source = strings.Replace(source, " ", "-", -1)
 
 	// Post new branch
 	body := map[string]string{
-		"ref": fmt.Sprintf("refs/heads/%s", subject),
+		"ref": fmt.Sprintf("refs/heads/%s", source),
 		"sha": sha,
 	}
 	requestJSON, _ := json.Marshal(body)
@@ -68,10 +72,10 @@ func createbranch(token string, repoName string, orgName string, subject string)
 	return resp.StatusCode
 }
 
-func get_lastcommit(token string, repoName string, GH_ORG string) string {
+func get_lastcommit(token string, repoName string, GH_ORG string, target string) string {
 	req, _ := http.NewRequest(
 		"GET",
-		fmt.Sprintf("https://api.github.com/repos/%s/%s/commits/main", GH_ORG, repoName),
+		fmt.Sprintf("https://api.github.com/repos/%s/%s/commits/%s", GH_ORG, repoName, target),
 		strings.NewReader(""),
 	)
 
@@ -90,7 +94,7 @@ func get_lastcommit(token string, repoName string, GH_ORG string) string {
 
 // func github_createPR(data []byte) int {
 // 	// Get repository
-// 	repo, err := jsonparser.GetString(data, "work_package", repoField)
+// 	repo, err := jsonparser.GetString(data, "work_package", RepoField)
 // 	Check(err, "warning")
 // 	r := strings.Split(repo, "/")
 // 	repoName := r[len(r)-1]
@@ -176,7 +180,7 @@ func github_readPermission(data []byte) int {
 		log.Error(fmt.Sprintf("Task %s(%d) have no assignee. Attach a new collaborator to assign new permissions.This error provoked the last one", task, id))
 		return http.StatusNotFound
 	}
-	repoURL, err := jsonparser.GetString(data, "work_package", repoField)
+	repoURL, err := jsonparser.GetString(data, "work_package", RepoField)
 	Check(err, "warning")
 	r := strings.Split(repoURL, "/")
 	repo := r[len(r)-1]
@@ -201,7 +205,7 @@ func github_readPermission(data []byte) int {
 	Check(err, "fatal")
 	respbody, err := io.ReadAll(resp.Body)
 	Check(err, "error")
-	user, err := jsonparser.GetString(respbody, githubUserField)
+	user, err := jsonparser.GetString(respbody, GithubUserField)
 	Check(err, "error")
 
 	return givePermission(GH_ORG, repo, user, READ, token)
@@ -215,7 +219,7 @@ func github_writePermission(data []byte) int {
 		log.Error(fmt.Sprintf("Task %s(%d) have no assignee. Attach a new collaborator to assign new permissions.This error provoked the last one", task, id))
 		return http.StatusNotFound
 	}
-	repoURL, err := jsonparser.GetString(data, "work_package", repoField)
+	repoURL, err := jsonparser.GetString(data, "work_package", RepoField)
 	Check(err, "warning")
 	r := strings.Split(repoURL, "/")
 	repo := r[len(r)-1]
@@ -240,7 +244,7 @@ func github_writePermission(data []byte) int {
 	Check(err, "fatal")
 	respbody, err := io.ReadAll(resp.Body)
 	Check(err, "error")
-	user, err := jsonparser.GetString(respbody, githubUserField)
+	user, err := jsonparser.GetString(respbody, GithubUserField)
 	Check(err, "error")
 
 	return givePermission(GH_ORG, repo, user, WRITE, token)

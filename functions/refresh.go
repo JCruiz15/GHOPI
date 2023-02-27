@@ -21,6 +21,9 @@ import (
 // TODO - Change keyword:change
 
 func Refresh(lastRefresh time.Time, channel chan string) {
+
+	go CheckCustomFields()
+
 	var repo_list []string
 
 	// ====== Obtain the list of work_packages since the last refresh ======
@@ -69,10 +72,10 @@ func Refresh(lastRefresh time.Time, channel chan string) {
 
 	for i := 0; i < len(package_list); i++ {
 		pack, _ := json.Marshal(package_list[i])
-		repoURL, err := jsonparser.GetString(pack, repoField)
+		repoURL, err := jsonparser.GetString(pack, RepoField)
 
 		if err != nil && strings.Contains(err.Error(), "null") { // If repo field is empty exit the for loop
-			subject, _ := jsonparser.GetString(pack, "subject")
+			subject, _ := jsonparser.GetString(pack, SourceBranchField)
 			id, _ := jsonparser.GetInt(pack, "id")
 			log.Warn(fmt.Sprintf(
 				"Work package %s[id: %d] has no repo declared",
@@ -107,11 +110,12 @@ func Refresh(lastRefresh time.Time, channel chan string) {
 				repo_list = append(repo_list, repoName)
 
 			}
-			subj, _ := jsonparser.GetString(pack, "subject")
+			subj, _ := jsonparser.GetString(pack, SourceBranchField)
+			target, _ := jsonparser.GetString(pack, TargetBranchField)
 
 			// If task branch does not exist, create a new one
 			if !branchExists(repoURL, subj, gh_token) {
-				go createbranch(gh_token, repoName, org, subj)
+				go createbranch(gh_token, repoName, org, subj, target)
 			}
 
 			// Get assignee and give write permision
@@ -193,5 +197,5 @@ func getGHuser_from_assigneehref(assigneehref string, token string) (string, err
 	resp, err := http.DefaultClient.Do(req)
 	Check(err, "fatal")
 	body, _ := io.ReadAll(resp.Body)
-	return jsonparser.GetString(body, githubUserField)
+	return jsonparser.GetString(body, GithubUserField)
 }

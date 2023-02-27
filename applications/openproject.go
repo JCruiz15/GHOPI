@@ -65,13 +65,7 @@ func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, D
 		f.Write(config.BytesIndent("", "\t"))
 	}
 
-	// w.Header().Set("Content-type", "application/json")
-	// var prettyJSON bytes.Buffer
-	// parser := json.Indent(&prettyJSON, []byte(Data), "", "\t")
-	// if parser != nil {
-	// 	log.Panic("JSON parse error")
-	// }
-	// URL := fmt.Sprintf("https://%s", r.Host)
+	go functions.CheckCustomFields()
 
 	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
@@ -125,8 +119,6 @@ func (op *Openproject) getAccessToken(code string, URL string) string {
 
 	respbody, _ := io.ReadAll(resp.Body)
 
-	fmt.Println(string(respbody))
-
 	type AccessTokenResponse struct {
 		AccessToken  string `json:"access_token"`
 		TokenType    string `json:"token_type"`
@@ -168,7 +160,6 @@ func (op *Openproject) getData(accessToken string) map[string]string {
 
 func (op *Openproject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
-	fmt.Println(code)
 	// security := r.URL.Query().Get("state")
 	// secured := false
 	// for key, value := range op.states {

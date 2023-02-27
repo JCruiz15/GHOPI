@@ -31,23 +31,13 @@ import (
 
 // TODO - Api security, prevent XSS, etc.
 
-// TODO - Create post buttons for user input
-
-// TODO - Create customFields through web pushing a button
-
-// TODO - Cerrar los body de las req, para no leakear información
-
 // TODO - Crear el webhook button para openproject
 
 // TODO - Si no se inserta el nombre de la URL de OP se asume que es localhost:8080 sino se debe insertar en el config.json o mediante la web.
 
 // TODO - Hacer una función para checkear el estado de los tokens
 
-// TODO - Revisar github_functions/get_branch
-
 // TODO - Check if tasks closed need a branch too or not
-
-var repoField string = "customField1"
 
 func init() {
 	log.SetFormatter(&easy.Formatter{
@@ -72,7 +62,6 @@ func init() {
 }
 
 func main() {
-	functions.CheckCustomFields()
 	var github applications.Github = *applications.NewGithub()
 	var openproject applications.Openproject = *applications.NewOpenproject()
 
@@ -81,8 +70,11 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	http.HandleFunc("/", index)
-	http.HandleFunc("/instructions", instructions)
-	http.HandleFunc("/log", logs)
+	http.HandleFunc("/usermanual", instructions)
+	http.HandleFunc("/logs", logs)
+
+	http.HandleFunc("/config-openproject", config_op)
+	http.HandleFunc("/config-github", config_gh)
 
 	http.HandleFunc("/api/openproject", PostOpenProject)
 	http.HandleFunc("/api/github", PostGithub)
@@ -102,6 +94,7 @@ func main() {
 		func(w http.ResponseWriter, r *http.Request) {
 			openproject.LoggedinHandler(w, r, nil, "")
 		})
+	http.HandleFunc("/op/save-url", save_openproject_url)
 
 	port := 5002
 	log.Info(fmt.Sprintf("Application running on port %d", port))
@@ -116,10 +109,19 @@ func renderTemplate(w http.ResponseWriter, tmpl string) {
 
 func index(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "index")
+	// http.Redirect(w, r, "/instructions", http.StatusSeeOther)
 }
 
 func instructions(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "instructions")
+}
+
+func config_op(w http.ResponseWriter, _ *http.Request) {
+	renderTemplate(w, "openproject_config")
+}
+
+func config_gh(w http.ResponseWriter, _ *http.Request) {
+	renderTemplate(w, "github_config")
 }
 
 func logs(w http.ResponseWriter, _ *http.Request) {
@@ -206,6 +208,11 @@ func github_webhook(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func save_openproject_url(w http.ResponseWriter, _ *http.Request) {
+	w.Write([]byte("mesnanbje"))
+	// TODO - Continue with save the op_url
+}
+
 func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		byte_body, err := io.ReadAll(r.Body)
@@ -223,7 +230,7 @@ func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func requestOpenProject(data []byte) {
-	repo, err := jsonparser.GetString(data, "work_package", repoField)
+	repo, err := jsonparser.GetString(data, "work_package", functions.RepoField)
 	functions.Check(err, "warn")
 	kind, err2 := jsonparser.GetString(data, "work_package", "_embedded", "type", "name")
 	functions.Check(err2, "warn")

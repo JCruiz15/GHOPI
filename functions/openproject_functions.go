@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 
+	"github.com/Jeffail/gabs/v2"
 	"github.com/buger/jsonparser"
 	log "github.com/sirupsen/logrus"
 )
@@ -126,6 +128,29 @@ func get_lockVersion(wp_id int) int {
 }
 
 func CheckCustomFields() {
+
+	// Se ejecuta al logearte en OP y al hacer refresh
+
+	customFields_workpackages()
+	customFields_user()
+
+	var config *gabs.Container
+	config_path := ".config/config.json"
+	config, err := gabs.ParseJSONFile(config_path)
+	Check(err, "Error")
+
+	if !config.Exists("customFields", "users", "githubUserField") {
+		log.Error("Github user custom field is not created or could not be found. Its name must contain 'github' to be found correctly.")
+	} else if !config.Exists("customFields", "work_packages", "repoField") {
+		log.Error("Repository custom field is not created or could not be found. Its name must contain 'repo' to be found correctly.")
+	} else if !config.Exists("customFields", "work_packages", "sourceBranchField") {
+		log.Error("Source branch custom field is not created or could not be found. Its name must contain 'source' to be found correctly.")
+	} else if !config.Exists("customFields", "work_packages", "targetBranchField") {
+		log.Error("Target branch custom field is not created or could not be found. Its name must contain 'target' to be found correctly.")
+	}
+}
+
+func customFields_workpackages() {
 	filter := url.QueryEscape(`[{"id":{"operator":"=","values":["1-1"]}}]`)
 	url := op_url + `/api/v3/work_packages/schemas?filters=` + filter
 	req, err := http.NewRequest(
@@ -134,7 +159,6 @@ func CheckCustomFields() {
 		bytes.NewBuffer([]byte("")),
 	)
 	Check(err, "fatal")
-	fmt.Println(req.URL.String())
 
 	f, err := os.Open(".config/config.json")
 	Check(err, "error")
@@ -147,7 +171,6 @@ func CheckCustomFields() {
 	resp, err := http.DefaultClient.Do(req)
 	Check(err, "fatal")
 
-	fmt.Println(resp.StatusCode)
 	body, _ := io.ReadAll(resp.Body)
 
 	elements, _, _, _ := jsonparser.Get(body, "_embedded", "elements")
@@ -155,11 +178,84 @@ func CheckCustomFields() {
 
 	searchKeys := make(map[string]interface{})
 	json.Unmarshal(elements, &searchKeys)
-	for key := range searchKeys {
+
+	for key, value := range searchKeys {
 		if strings.HasPrefix(key, "customField") {
-			fmt.Println(key)
+			customfield := key
+			v := reflect.ValueOf(value)
+			for _, k := range v.MapKeys() {
+				strct := v.MapIndex(k)
+				if k.Interface() == "name" {
+					subject := strings.ToLower(fmt.Sprintf("%v", strct.Interface()))
+					if strings.Contains(subject, "repo") {
+						write_config_customFields("repoField", customfield, "work_packages")
+					} else if strings.Contains(subject, "source") {
+						write_config_customFields("sourceBranchField", customfield, "work_packages")
+					} else if strings.Contains(subject, "target") {
+						write_config_customFields("targetBranchField", customfield, "work_packages")
+					}
+				}
+			}
 		}
 	}
+}
 
-	// De momento conseguimos obtener los nombres de los customFields de workpackages. Falta coger los datos de cada uno y hacer lo mismo con user
+func customFields_user() {
+	url := op_url + `/api/v3/users/schema`
+	req, err := http.NewRequest(
+		"GET",
+		url,
+		bytes.NewBuffer([]byte("")),
+	)
+	Check(err, "fatal")
+
+	f, err := os.Open(".config/config.json")
+	Check(err, "error")
+	config, _ := io.ReadAll(f)
+	token, _ := jsonparser.GetString(config, "openproject-token")
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	Check(err, "fatal")
+
+	body, _ := io.ReadAll(resp.Body)
+
+	searchKeys := make(map[string]interface{})
+	json.Unmarshal(body, &searchKeys)
+
+	for key, value := range searchKeys {
+		if strings.HasPrefix(key, "customField") {
+			customfield := key
+			v := reflect.ValueOf(value)
+			for _, k := range v.MapKeys() {
+				strct := v.MapIndex(k)
+				if k.Interface() == "name" {
+					subject := strings.ToLower(fmt.Sprintf("%v", strct.Interface()))
+					if strings.Contains(subject, "github") {
+						write_config_customFields("githubUserField", customfield, "users")
+					}
+				}
+			}
+		}
+	}
+}
+
+func write_config_customFields(key string, value string, path string) {
+	var config *gabs.Container
+	config_path := ".config/config.json"
+
+	if _, err := os.Stat(config_path); err == nil {
+		config, err = gabs.ParseJSONFile(config_path)
+		Check(err, "Error")
+	} else {
+		config = gabs.New()
+	}
+	config.Set(value, "customFields", path, key)
+
+	f, err := os.Create(config_path)
+	Check(err, "Error")
+	defer f.Close()
+	f.Write(config.BytesIndent("", "\t"))
 }

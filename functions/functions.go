@@ -3,15 +3,23 @@ package functions
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"strings"
 
 	"github.com/buger/jsonparser"
 	log "github.com/sirupsen/logrus"
 )
 
-var repoField string = "customField1"
-var githubUserField string = "customField2"
 var op_url string = "http://localhost:8080"
+
+var f, _ = os.Open(".config/config.json")
+var config, _ = io.ReadAll(f)
+var RepoField, _ = jsonparser.GetString(config, "customFields", "work_packages", "repoField")
+var SourceBranchField, _ = jsonparser.GetString(config, "customFields", "work_packages", "sourceBranchField")
+var TargetBranchField, _ = jsonparser.GetString(config, "customFields", "work_packages", "targetBranchField")
+var GithubUserField, _ = jsonparser.GetString(config, "customFields", "users", "githubUserField")
 
 func Check(err error, level string) bool {
 	if err != nil {
@@ -36,7 +44,7 @@ func Check(err error, level string) bool {
 func Github_options(data []byte) {
 	action, errAction := jsonparser.GetString(data, "action")
 	Check(errAction, "warning")
-	repo, _ := jsonparser.GetString(data, "work_package", repoField) //TODO
+	repo, _ := jsonparser.GetString(data, "work_package", RepoField) //TODO
 	if repo != "" {
 		switch action {
 		case "work_package:created":
@@ -44,11 +52,33 @@ func Github_options(data []byte) {
 			go github_writePermission(data)
 
 			id, _ := jsonparser.GetInt(data, "work_package", "id")
-			targetBranch, _ := jsonparser.GetString(data, "work_package", "customField4")
-			sourceBranch, _ := jsonparser.GetString(data, "work_package", "customField5")
-			link := fmt.Sprintf("%s/compare/%s...%s?quick_pull=1&title=%s", repo, targetBranch, sourceBranch, fmt.Sprintf("%s - [%d]", sourceBranch, id))
+			targetBranch, _ := jsonparser.GetString(data, "work_package", TargetBranchField)
+			sourceBranch, _ := jsonparser.GetString(data, "work_package", SourceBranchField)
 
-			msg := "When the task is finish click in the following link to create a pull request for your task. [Create pull request in github](" + link + ")"
+			assigneeRef, _ := jsonparser.GetString(data, "work_package", "_links", "assignee", "href")
+
+			req, _ := http.NewRequest(
+				"GET",
+				fmt.Sprintf("%s/%s", op_url, assigneeRef),
+				strings.NewReader(""),
+			)
+
+			f, err := os.Open(".config/config.json")
+			Check(err, "error")
+			config, _ := io.ReadAll(f)
+			token, err := jsonparser.GetString(config, "github-token")
+			Check(err, "error")
+			req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+
+			resp, _ := http.DefaultClient.Do(req)
+			respbody, err := io.ReadAll(resp.Body)
+			Check(err, "error")
+			assignee, err := jsonparser.GetString(respbody, GithubUserField)
+			Check(err, "error")
+
+			link := fmt.Sprintf("%s/compare/%s...%s?quick_pull=1&title=%s&assignees=%s", repo, targetBranch, sourceBranch, fmt.Sprintf("%s-[%d]", sourceBranch, id), assignee)
+
+			msg := "When the task is finish click in the following link to create a pull request for your task. " + link + ""
 			openproject_msg(msg, int(id))
 
 		case "work_package:updated":
@@ -75,26 +105,33 @@ func Github_options(data []byte) {
 func Openproject_options(data []byte) {
 	all := make(map[string]interface{})
 	json.Unmarshal(data, &all)
-	// fmt.Println(all)
 
 	if _, ok := all["pull_request"]; ok {
 		pr_title, _ := jsonparser.GetString(data, "pull_request", "title")
 		action, _ := jsonparser.GetString(data, "action")
+		fmt.Println(action)
 		switch action {
 		case "opened":
-			openproject_change_status(data, 7)
+			// openproject_change_status(data, 7)
 			openproject_PR_msg(
 				data,
 				fmt.Sprintf("[%s] Pull request was opened", pr_title),
 			)
-		case "closed":
+
+		case "synchronize":
 			openproject_change_status(data, 12)
+			openproject_PR_msg(
+				data,
+				fmt.Sprintf("[%s] Pull request was merged. Task has been closed", pr_title),
+			)
+		case "closed":
+			// openproject_change_status(data, 12)
 			openproject_PR_msg(
 				data,
 				fmt.Sprintf("[%s] Pull request was closed. Task may be closed too", pr_title),
 			)
 		case "reopened":
-			openproject_change_status(data, 13)
+			// openproject_change_status(data, 13)
 			openproject_PR_msg(
 				data,
 				fmt.Sprintf("[%s] Pull request was reopened. Task may be reopened too", pr_title),

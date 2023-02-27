@@ -5,11 +5,8 @@
 {{end}}
 
 {{define "navbar"}}
-<div class="collapse navbar-collapse" id="menuItems">
+<!--<div class="collapse navbar-collapse" id="menuItems">
     <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-            <a href="/instructions" class="nav-link">Instructions</a>
-        </li>
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="/" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 Copy URL
@@ -44,7 +41,16 @@
             <span class="material-symbols-outlined inline-icon">sync</span>
         </span>
     </button>
+</div> -->
+{{end}}
+
+{{define "sidebar-top"}}
+<div id="back">
+    <a href="/"><span class="material-symbols-outlined">keyboard_backspace</span>&ensp;Back</a>
 </div>
+{{end}}
+
+{{define "sidebar-bottom"}}
 {{end}}
 
 {{define "content"}}

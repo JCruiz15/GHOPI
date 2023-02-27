@@ -1,30 +1,7 @@
 {{define "head"}}
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-<title>GHOPI</title>
-
-<style>
-    #save .material-symbols-outlined {
-        font-variation-settings:
-        'FILL' 1,
-        'wght' 300,
-        'GRAD' -25,
-        'opsz' 48;
-        color:rgb(71, 181, 255);
-        position: absolute;
-        transition: all 0.5s;
-      }
-      #save .material-symbols-outlined:hover {
-          color: rgb(37, 109, 133);
-        }
-      #save .material-symbols-outlined:active {
-          color: rgb(22, 75, 97);
-      }
-
-      #save:hover {
-        cursor:pointer;
-      }
-</style>
+<title>User Manual</title>
 {{end}}
 
 {{define "navbar"}}
@@ -47,12 +24,12 @@
                         Copy Github endpoint
                     </a>
                 </li>
-                <li>
-                    <!-- <a class="dropdown-item text-lgray" onclick="copyGitlab()" role="button">
+                <!--<li>
+                    <a class="dropdown-item text-lgray" onclick="copyGitlab()" role="button">
                         <img class="me-1" src="static/img/gitlab_logo.svg" title="gitlab logo" style="width: 20px;height: 20px;">
                         Copy Gitlab endpoint
-                    </a> -->
-                </li>
+                    </a>
+                </li> -->
             </ul>
         </li>
     </ul>
@@ -68,52 +45,35 @@
 {{end}}
 
 {{define "sidebar-top"}}
+<div id="back">
+    <a href="/"><span class="material-symbols-outlined">keyboard_backspace</span>&ensp;Back</a>
+</div>
 {{end}}
 
 {{define "sidebar-bottom"}}
 {{end}}
 
 {{define "content"}}
-<div class="container-fluid">
-    <div class="row text-center mx-4 mt-4 mb-1">
-        <div class="col-md-6 mb-3">
-            <h4>Open Project</h4>
-            <label class="mb-2">OpenProject instance URL:</label><br>
-            <p>
-                <input type="text" id="op_url" name="op_url">
-                <a onclick="save()" id="save"><span class="material-symbols-outlined">save</span></a>
-            </p>
-            <form action="/op/login" method="post" enctype="multipart/form-data">
-                <input type="submit" name="submit_op" value="Login"/>
-            </form>
-        </div>
-        <div class="col-md-6 mb-3">
-            <h4>Github</h4>
-            <form action="/github/login" method="post" enctype="multipart/form-data">
-                <input class="mt-2" type="submit" name="submit_gh" value="Login"/>
-                <!-- <a href="/github/login">LOGIN</a></br> -->
-            </form>
-            <button class="btn btn-secondary mt-2" type="button" name="gh_webhook" onclick="gh_webhook()">WEBHOOK</button>
 
-        </div>
-        <!-- <div class="col-md-4 mb-3">
-            <h4>Gitlab</h4>
-            <label class="mb-2" for="gl_user">User:</label><br>
-            <input type="text" id="gl_user" name="gluser" disabled><br>
-            <label class="mb-2" for="gl_apikey">Api Key:</label><br>
-            <input type="password" id="gl_apikey" name="gl_apikey" disabled><br>
-            <input class="mt-1 me-1" type="checkbox" onclick="myFunction('gl_apikey')" disabled><label class="mt-1" style="font-size: 12px">Show key</label> 
-        </div> -->
+<div class="container-fluid px-5">
+    <div class="mb-3">
+        <h1 class="title">Github configuration</h1>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras ut nibh enim. Aenean leo nibh, lacinia a lobortis eget, placerat a ante. Aenean quis condimentum urna. In leo est, rutrum finibus tempus ac, tincidunt mattis sapien. Integer nunc eros, venenatis ac gravida eget, rhoncus ac lectus. Nulla facilisi. Donec venenatis malesuada tincidunt. Sed vehicula eros quis diam aliquam pellentesque. Etiam accumsan nibh non ullamcorper sollicitudin. Suspendisse dui nibh, suscipit eu nisi a, pretium vestibulum dui. Donec sed libero quis metus tempor condimentum eleifend ac felis. Curabitur at leo ut nunc luctus vehicula. Suspendisse dignissim leo ut leo imperdiet, consectetur sollicitudin lacus porta. Etiam sit amet elit ornare, pharetra metus vitae, varius dolor.
+        </p>
+
+        <form action="/github/login" method="post" enctype="multipart/form-data">
+            <input class="mt-2" type="submit" name="submit_gh" value="Login"/>
+            <!-- <a href="/github/login">LOGIN</a></br> -->
+        </form>
+        <button class="btn btn-secondary mt-2" type="button" name="gh_webhook" onclick="gh_webhook()">WEBHOOK</button>
     </div>
-    <!-- <div class="row text-center">
-        <div class="col-md-12">
-            <input type="submit" name="submit" value="Upload" disabled>
-        </div>
-    </div> -->
 </div>
+
 {{end}}
 
 {{define "scripts"}}
+
 <script>
     const url = (window.location.href).split(/[?#]/)[0] + "api/refresh";
     const theButton = document.querySelector(".btn-sync");
@@ -190,40 +150,4 @@
     }
 </script>
 
-<script>
-    function save() {
-        const url = (window.location.href).split(/[?#]/)[0] + "op/save-url";
-        let input = document.getElementById("op_url");
-        if (input.value === "") {
-            input.value = "";
-            input.placeholder = "URL cannot be blank";
-        } else if (input.value.includes(" ")) {
-            input.value = "";
-            input.placeholder = "URL cannot contain spaces";
-        } else {
-            let data = {op_url: input.value};
-
-            fetch("/op/save-url", {
-                method: "POST",
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(data)
-            }).then(res => {
-                Swal.fire("URL sent", res.json(), "success")
-            });
-        }
-
-
-    }
-</script>
-
-<!-- <script>
-    function myFunction(id) {
-        var x = document.getElementById(id);
-        if (x.type === "password") {
-            x.type = "text";
-        } else {
-            x.type = "password";
-        }
-    }
-</script> -->
 {{end}}
