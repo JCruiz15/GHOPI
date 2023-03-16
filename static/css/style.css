@@ -31,7 +31,7 @@ main p {
   font-family: var(--text-font) ;
 }
 
-main {
+main :not(.material-symbols-outlined){
   font-family: var(--text-font);
 }
 
@@ -107,6 +107,143 @@ main h4 {
   animation: loading-spinner 1.25s ease infinite;
 }
 
+.btn-one {
+  background-color: var(--principal-blue);
+  color: var(--primary-light);
+
+  font-weight: 600;
+  font-family: var(--subtitle-font);
+  font-size: medium;
+
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 40px;
+  padding-right: 40px;
+
+  border-radius: 5px;
+  border-color: transparent;
+  box-shadow: 3px 3px 5px var(--secondary-dark);
+  transition: all 200ms;
+}
+
+.btn-one:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 2px var(--secondary-dark);
+}
+
+.btn-one:hover {
+  background-color: var(--middle-blue);
+}
+
+.btn-two {
+  background-color: white;
+  color: var(--primary-dark);
+
+  font-weight: 100;
+  font-family: var(--subtitle-font);
+  font-size: medium;
+
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
+
+  border-radius: 5px;
+  border-color: transparent;
+  box-shadow: 3px 3px 5px var(--cerulean);
+  transition: all 200ms;
+}
+
+.btn-two:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 2px var(--cerulean);
+}
+
+.btn-two:hover {
+  background-color: var(--primary-light);
+}
+
+.form-field {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  line-height: 25px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  border-radius: 6px;
+  color: var(--primary-dark);
+  border: 1px solid var(--secondary-light);
+  background: white;
+  transition: border 0.3s ease;
+}
+.form-field::placeholder {
+  color: var(--middle-blue);
+}
+.form-field:focus {
+  outline: none;
+  border-color: var(--middle-blue);
+  background-color: var(--primary-light);
+}
+.form-group {
+  position: relative;
+  display: flex;
+  width: 40%;
+}
+.form-group > span, .form-group .form-field {
+  white-space: nowrap;
+  display: block;
+}
+.form-group > span:not(:first-child):not(:last-child), .form-group .form-field:not(:first-child):not(:last-child) {
+  border-radius: 0;
+}
+.form-group > span:first-child, .form-group .form-field:first-child {
+  border-radius: 6px 0 0 6px;
+}
+.form-group > span:last-child, .form-group .form-field:last-child {
+  border-radius: 0 6px 6px 0;
+}
+.form-group > span:not(:first-child), .form-group .form-field:not(:first-child) {
+  margin-left: -1px;
+}
+.form-group .form-field {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  width: 1%;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.form-group > span {
+  cursor: default;
+  text-align: center;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 25px;
+  color: var(--principal-blue);
+  background: var(--primary-light);
+  border: 1px solid var(--secondary-light);
+  transition: background 0.3s ease, border 0.3s ease, color 0.3s ease;
+}
+.form-group:focus-within > span {
+  color: white;
+  background: var(--principal-blue);
+  border-color: var(--middle-blue);
+}
+
+.form-group > span.button {
+  cursor: pointer;
+}
+
+.form-group > span.button:hover {
+  background-color: var(--middle-blue);
+  color: var(--primary-light);
+}
+
+.form-group > span.button:active {
+  background-color: var(--cerulean);
+}
+
 @keyframes loading-spinner {
   from{
     transform: rotate(0turn);
@@ -123,9 +260,4 @@ main h4 {
   to {
     background-color: var(--cerulean);
   }
-}
-
-.inline-icon {
-  vertical-align: text-bottom;
-  font-size: 18px;
 }

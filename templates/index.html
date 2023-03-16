@@ -24,6 +24,16 @@
       #save:hover {
         cursor:pointer;
       }
+    .btn-sync__text .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 1,
+        'wght' 600,
+        'GRAD' -25,
+        'opsz' 100;
+        color: rgb(223, 246, 255);
+        vertical-align: text-bottom;
+        font-size: 24px;
+      }
 </style>
 {{end}}
 
@@ -61,7 +71,7 @@
     <button type="button" class="btn btn-sync me-3 btn-lg" onclick="loading()">
         <span class="btn-sync__text">
             Refresh 
-            <span class="material-symbols-outlined inline-icon">sync</span>
+            <span class="material-symbols-outlined">sync</span>
         </span>
     </button>
 </div>

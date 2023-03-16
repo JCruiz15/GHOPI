@@ -67,7 +67,7 @@ func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data ma
 	}
 	// URL := fmt.Sprintf("https://%s", r.Host)
 
-	http.Redirect(w, r, "/", http.StatusMovedPermanently)
+	http.Redirect(w, r, "/config-github", http.StatusMovedPermanently)
 }
 
 func (gh *Github) LoginHandler(w http.ResponseWriter, r *http.Request) {

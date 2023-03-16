@@ -18,6 +18,7 @@ import (
 	"github.com/buger/jsonparser"
 	"github.com/joho/godotenv"
 
+	"github.com/Jeffail/gabs/v2"
 	log "github.com/sirupsen/logrus"
 	easy "github.com/t-tomalak/logrus-easy-formatter"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -129,7 +130,6 @@ func logs(w http.ResponseWriter, _ *http.Request) {
 	tpl.Execute(w, nil)
 }
 
-// TODO - Llevarlo a una funcion en functions
 func github_webhook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var orgName string = ""
@@ -208,9 +208,30 @@ func github_webhook(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func save_openproject_url(w http.ResponseWriter, _ *http.Request) {
-	w.Write([]byte("mesnanbje"))
-	// TODO - Continue with save the op_url
+func save_openproject_url(w http.ResponseWriter, r *http.Request) {
+	type save_json struct {
+		OP_url string `json:"op_url"`
+	}
+	b_body, err := io.ReadAll(r.Body)
+	functions.Check(err, "error")
+	var body save_json
+	json.Unmarshal(b_body, &body)
+
+	var config *gabs.Container
+	config_path := ".config/config.json"
+
+	if _, err := os.Stat(config_path); err == nil {
+		config, err = gabs.ParseJSONFile(config_path)
+		functions.Check(err, "Error")
+	} else {
+		config = gabs.New()
+	}
+	config.Set(body.OP_url, "openproject-url")
+
+	f, err := os.Create(config_path)
+	functions.Check(err, "Error")
+	defer f.Close()
+	f.Write(config.BytesIndent("", "\t"))
 }
 
 func PostOpenProject(w http.ResponseWriter, r *http.Request) {
