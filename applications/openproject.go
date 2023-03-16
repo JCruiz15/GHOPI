@@ -206,5 +206,10 @@ func get_OP_uri() string {
 	config_path := ".config/config.json"
 	config, err := gabs.ParseJSONFile(config_path)
 	functions.Check(err, "error")
-	return config.Path("openproject-url").Data().(string)
+	val, ok := config.Path("openproject-url").Data().(string)
+	if ok {
+		return val
+	} else {
+		return "http://localhost:8080"
+	}
 }

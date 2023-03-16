@@ -34,8 +34,6 @@ import (
 
 // TODO - Crear el webhook button para openproject
 
-// TODO - Si no se inserta el nombre de la URL de OP se asume que es localhost:8080 sino se debe insertar en el config.json o mediante la web.
-
 // TODO - Hacer una función para checkear el estado de los tokens
 
 // TODO - Check if tasks closed need a branch too or not
