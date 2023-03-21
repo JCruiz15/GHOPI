@@ -124,8 +124,7 @@ func config_gh(w http.ResponseWriter, _ *http.Request) {
 }
 
 func logs(w http.ResponseWriter, _ *http.Request) {
-	tpl := template.Must(template.ParseFiles("templates/log.html"))
-	tpl.Execute(w, nil)
+	renderTemplate(w, "log")
 }
 
 func github_webhook(w http.ResponseWriter, r *http.Request) {
@@ -250,11 +249,14 @@ func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 
 func requestOpenProject(data []byte) {
 	repo, err := jsonparser.GetString(data, "work_package", functions.RepoField)
-	functions.Check(err, "warn")
-	kind, err2 := jsonparser.GetString(data, "work_package", "_embedded", "type", "name")
+	if err != nil {
+		log.Warn("Repository URL not found")
+		return
+	}
+	wp_type, err2 := jsonparser.GetString(data, "work_package", "_embedded", "type", "name")
 	functions.Check(err2, "warn")
 
-	if kind == "Task" {
+	if wp_type == "Task" {
 		switch {
 		case strings.Contains(string(repo), "github"):
 			functions.Github_options(data)

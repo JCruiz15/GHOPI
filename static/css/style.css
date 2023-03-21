@@ -27,6 +27,12 @@ nav a.title {
   font-family: var(--title-font);
 }
 
+h2.subtitle {
+  color: var(--cerulean);
+  font-family: var(--subtitle-font);
+  font-size: large;
+}
+
 main p {
   font-family: var(--text-font) ;
 }
@@ -139,7 +145,7 @@ main h4 {
   background-color: white;
   color: var(--primary-dark);
 
-  font-weight: 100;
+  font-weight: 200;
   font-family: var(--subtitle-font);
   font-size: medium;
 

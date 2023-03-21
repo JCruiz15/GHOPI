@@ -61,7 +61,7 @@
 
 {{define "sidebar-top"}}
 <div id="back">
-    <a href="/"><span class="material-symbols-outlined">keyboard_backspace</span>&ensp;Back</a>
+    <a onclick="window.history.go(-1);" style="cursor: pointer;"><span class="material-symbols-outlined">keyboard_backspace</span>&ensp;Back</a>
 </div>
 {{end}}
 
@@ -77,11 +77,15 @@
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras ut nibh enim. Aenean leo nibh, lacinia a lobortis eget, placerat a ante. Aenean quis condimentum urna. In leo est, rutrum finibus tempus ac, tincidunt mattis sapien. Integer nunc eros, venenatis ac gravida eget, rhoncus ac lectus. Nulla facilisi. Donec venenatis malesuada tincidunt. Sed vehicula eros quis diam aliquam pellentesque. Etiam accumsan nibh non ullamcorper sollicitudin. Suspendisse dui nibh, suscipit eu nisi a, pretium vestibulum dui. Donec sed libero quis metus tempor condimentum eleifend ac felis. Curabitur at leo ut nunc luctus vehicula. Suspendisse dignissim leo ut leo imperdiet, consectetur sollicitudin lacus porta. Etiam sit amet elit ornare, pharetra metus vitae, varius dolor.
         </p>
 
-        <form action="/github/login" method="post" enctype="multipart/form-data">
-            <input class="btn-one mt-2" type="submit" name="submit_gh" value="Sign up with github"/>
-            <!-- <a href="/github/login">LOGIN</a></br> -->
-        </form>
-        <button class="btn-two mt-2" type="button" name="gh_webhook" onclick="gh_webhook()">WEBHOOK</button>
+        <div class="d-flex justify-content-center">
+            <form action="/github/login" method="post" enctype="multipart/form-data">
+                <input class="btn-one mt-2" type="submit" name="submit_gh" value="Sign up with github"/>
+                <!-- <a href="/github/login">LOGIN</a></br> -->
+            </form>
+        </div>
+        <div class="d-flex justify-content-center">
+            <button class="btn-two mt-2" type="button" name="gh_webhook" onclick="gh_webhook()">WEBHOOK</button>
+        </div>
     </div>
 </div>
 
@@ -90,7 +94,7 @@
 {{define "scripts"}}
 
 <script>
-    const url = (window.location.href).split(/[?#]/)[0] + "api/refresh";
+    const url = window.location.href.split(location.pathname)[0] + "/api/refresh";
     const theButton = document.querySelector(".btn-sync");
 
     function refresh(){

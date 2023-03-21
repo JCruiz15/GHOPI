@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Jeffail/gabs/v2"
 	"github.com/buger/jsonparser"
 	log "github.com/sirupsen/logrus"
 )
@@ -39,12 +40,25 @@ func Check(err error, level string) bool {
 	}
 }
 
-// ====== GITHUB ======
+func Get_OP_uri() string {
+	var config *gabs.Container
+	config_path := ".config/config.json"
+	config, err := gabs.ParseJSONFile(config_path)
+	Check(err, "error")
+	val, ok := config.Path("openproject-url").Data().(string)
+	if ok {
+		return val
+	} else {
+		return "http://localhost:8080"
+	}
+}
+
+// ====== From OPENPROJECT To GITHUB ======
 
 func Github_options(data []byte) {
 	action, errAction := jsonparser.GetString(data, "action")
 	Check(errAction, "warning")
-	repo, _ := jsonparser.GetString(data, "work_package", RepoField) //TODO
+	repo, _ := jsonparser.GetString(data, "work_package", RepoField)
 	if repo != "" {
 		switch action {
 		case "work_package:created":
@@ -57,6 +71,7 @@ func Github_options(data []byte) {
 
 			assigneeRef, _ := jsonparser.GetString(data, "work_package", "_links", "assignee", "href")
 
+			op_url = Get_OP_uri()
 			req, _ := http.NewRequest(
 				"GET",
 				fmt.Sprintf("%s/%s", op_url, assigneeRef),
@@ -100,7 +115,7 @@ func Github_options(data []byte) {
 	}
 }
 
-// ====== OPENPROJECT ======
+// ====== From GITHUB To OPENPROJECT ======
 
 func Openproject_options(data []byte) {
 	all := make(map[string]interface{})

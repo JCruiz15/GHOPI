@@ -13,7 +13,6 @@ import (
 	"web-service-gin/functions"
 
 	"github.com/Jeffail/gabs/v2"
-	"github.com/google/uuid"
 )
 
 type Openproject struct {
@@ -71,16 +70,16 @@ func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, D
 }
 
 func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	var URL string //= "http://localhost:5002"
+	var URL string = "http://localhost:5002"
 	if strings.Contains(r.Host, "localhost") {
 		URL = fmt.Sprintf("http://%s", r.Host)
 	} else {
 		URL = fmt.Sprintf("https://%s", r.Host)
 	}
-	s := uuid.New().String()
-	op.states[fmt.Sprint(len(op.states))] = s
+	// s := uuid.New().String()
+	// op.states[fmt.Sprint(len(op.states))] = s
 
-	op_url := get_OP_uri()
+	op_url := functions.Get_OP_uri()
 
 	redirectURL := fmt.Sprintf(
 		"%s/oauth/authorize?response_type=code&client_id=%s&scope=%s&redirect_uri=%s&prompt=consent",
@@ -95,7 +94,7 @@ func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (op *Openproject) getAccessToken(code string, URL string) string {
-	op_url := get_OP_uri()
+	op_url := functions.Get_OP_uri()
 
 	requestBody := url.Values{}
 	requestBody.Set("grant_type", "authorization_code")
@@ -140,7 +139,7 @@ func (op *Openproject) getAccessToken(code string, URL string) string {
 }
 
 func (op *Openproject) getData(accessToken string) map[string]string {
-	op_url := get_OP_uri()
+	op_url := functions.Get_OP_uri()
 
 	req, err := http.NewRequest(
 		"GET",
@@ -189,27 +188,15 @@ func (op *Openproject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// 	fmt.Println(gh.states)
 	// }
 
-	var URL string // = "http://localhost:5002"
+	var URL string = "http://localhost:5002"
 	if strings.Contains(r.Host, "localhost") {
 		URL = fmt.Sprintf("http://%s", r.Host)
 	} else {
 		URL = fmt.Sprintf("https://%s", r.Host)
 	}
+
 	AccessToken := op.getAccessToken(code, URL)
 	Data := op.getData(AccessToken)
 
 	op.LoggedinHandler(w, r, Data, AccessToken)
-}
-
-func get_OP_uri() string {
-	var config *gabs.Container
-	config_path := ".config/config.json"
-	config, err := gabs.ParseJSONFile(config_path)
-	functions.Check(err, "error")
-	val, ok := config.Path("openproject-url").Data().(string)
-	if ok {
-		return val
-	} else {
-		return "http://localhost:8080"
-	}
 }

@@ -25,6 +25,7 @@ func Refresh(lastRefresh time.Time, channel chan string) {
 	go CheckCustomFields()
 
 	var repo_list []string
+	op_url = Get_OP_uri()
 
 	// ====== Obtain the list of work_packages since the last refresh ======
 
@@ -186,6 +187,7 @@ func branchExists(repository string, subject string, token string) bool {
 }
 
 func getGHuser_from_assigneehref(assigneehref string, token string) (string, error) {
+	op_url = Get_OP_uri()
 	req, err := http.NewRequest(
 		"GET",
 		fmt.Sprintf("%s%s", op_url, assigneehref),

@@ -84,42 +84,21 @@
 {{end}}
 
 {{define "content"}}
-<div class="container-fluid">
-    <div class="row text-center mx-4 mt-4 mb-1">
-        <div class="col-md-6 mb-3">
-            <h4>Open Project</h4>
-            <label class="mb-2">OpenProject instance URL:</label><br>
-            <p>
-                <input type="text" id="op_url" name="op_url">
-                <a onclick="save()" id="save"><span class="material-symbols-outlined">save</span></a>
-            </p>
-            <form action="/op/login" method="post" enctype="multipart/form-data">
-                <input type="submit" name="submit_op" value="Login"/>
-            </form>
+<div class="container-fluid px-5">
+    <div class="mb-3">
+        <h1 class="title">GHOPI configuration</h1>
+        <p>
+            Welcome to the GHOPI's configuration website, our app has been developed to create a channel of communication between Open Project and Github. This service must give project leaders and CEOs more freedom and let them focus on their work and avoid as much as possible unnecessary stops to change repository permissions, create new branches, open and close pull requests, etc.
+        </p>
+        <p>
+            In this website you will be able to configure your GHOPI app. To get more information about how to do it, read carefully the <a href="/usermanual" style="text-decoration: none;" >User Manual</a>. If you have already used our configuration webpage you can go directly to configure Open Project or Github parameters. If some information have not been pushed between apps, just use the refresh button at the top right corner to syncronize both apps.
+        </p>
+        <div class="d-flex justify-content-center">
+            <button class="btn-one my-3 mx-4" type="button" name="locationOP" onclick="location.href = '/config-openproject'">Go to Open Project configuration</button>
+            <button class="btn-one my-3 mx-4" type="button" name="locationOP" onclick="location.href = '/config-github'">Go to Github configuration</button>
         </div>
-        <div class="col-md-6 mb-3">
-            <h4>Github</h4>
-            <form action="/github/login" method="post" enctype="multipart/form-data">
-                <input class="mt-2" type="submit" name="submit_gh" value="Login"/>
-                <!-- <a href="/github/login">LOGIN</a></br> -->
-            </form>
-            <button class="btn btn-secondary mt-2" type="button" name="gh_webhook" onclick="gh_webhook()">WEBHOOK</button>
-
-        </div>
-        <!-- <div class="col-md-4 mb-3">
-            <h4>Gitlab</h4>
-            <label class="mb-2" for="gl_user">User:</label><br>
-            <input type="text" id="gl_user" name="gluser" disabled><br>
-            <label class="mb-2" for="gl_apikey">Api Key:</label><br>
-            <input type="password" id="gl_apikey" name="gl_apikey" disabled><br>
-            <input class="mt-1 me-1" type="checkbox" onclick="myFunction('gl_apikey')" disabled><label class="mt-1" style="font-size: 12px">Show key</label> 
-        </div> -->
+        <img class="mt-3 mx-auto" src="OP_GH-channel.jpg" alt="Image of OP and Github comunicating" width="500" height="600" style="border: 1px solid;"> 
     </div>
-    <!-- <div class="row text-center">
-        <div class="col-md-12">
-            <input type="submit" name="submit" value="Upload" disabled>
-        </div>
-    </div> -->
 </div>
 {{end}}
 
@@ -148,92 +127,4 @@
         theButton.classList.add("btn-sync--loading");
     }
 </script>
-
-<script>
-    async function gh_webhook() {
-        const { value: org } = await Swal.fire({
-            title: 'Enter organization name',
-            input: 'text',
-            inputLabel: 'Organization:',
-            showCancelButton: true,
-            inputValidator: (value) => {
-                if (!value) {
-                return 'You need to write something!'
-                }
-                if (value.includes(" ")) {
-                    return 'Organization names must not have blank spaces'
-                }
-            }
-        })
-        if(org) {
-            const organization = {
-                "organizationName": org
-            };
-
-            function postWebhook(data) {
-                return new Promise(function (resolve, reject){
-                    fetch('/github/webhook', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data),
-                    })
-                    .then(
-                        (response) => response.json().then(data =>{
-                            resolve(data);
-                        }),
-                        (error) => {reject(error);}
-                    );
-                })
-            }
-
-            var result = await postWebhook(organization)
-            if(result.hasOwnProperty('message')){
-                msg = JSON.stringify(JSON.parse(JSON.stringify(result)).message)
-                Swal.fire("Webhook creation failed", msg.replace(/["]/g, ""), "error")
-            }
-            else {
-                Swal.fire("Webhook created", "Webhook was created successfully", "success")
-            }  
-        }
-    }
-</script>
-
-<script>
-    function save() {
-        const url = (window.location.href).split(/[?#]/)[0] + "op/save-url";
-        let input = document.getElementById("op_url");
-        if (input.value === "") {
-            input.value = "";
-            input.placeholder = "URL cannot be blank";
-        } else if (input.value.includes(" ")) {
-            input.value = "";
-            input.placeholder = "URL cannot contain spaces";
-        } else {
-            let data = {op_url: input.value};
-
-            fetch("/op/save-url", {
-                method: "POST",
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(data)
-            }).then(res => {
-                Swal.fire("URL sent", res.json(), "success")
-            });
-        }
-
-
-    }
-</script>
-
-<!-- <script>
-    function myFunction(id) {
-        var x = document.getElementById(id);
-        if (x.type === "password") {
-            x.type = "text";
-        } else {
-            x.type = "password";
-        }
-    }
-</script> -->
 {{end}}

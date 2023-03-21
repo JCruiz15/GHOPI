@@ -1,60 +1,114 @@
 {{define "head"}}
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-<title>User Manual</title>
+<title>GHOPI</title>
+
+<style>
+    #save .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 1,
+        'wght' 300,
+        'GRAD' -25,
+        'opsz' 48;
+        color:rgb(71, 181, 255);
+        position: absolute;
+        transition: all 0.5s;
+      }
+      #save .material-symbols-outlined:hover {
+          color: rgb(37, 109, 133);
+        }
+      #save .material-symbols-outlined:active {
+          color: rgb(22, 75, 97);
+      }
+
+      #save:hover {
+        cursor:pointer;
+      }
+    .btn-sync__text .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 1,
+        'wght' 600,
+        'GRAD' -25,
+        'opsz' 100;
+        color: rgb(223, 246, 255);
+        vertical-align: text-bottom;
+        font-size: 24px;
+      }
+</style>
 {{end}}
 
 {{define "navbar"}}
-<!--<div class="collapse navbar-collapse" id="menuItems">
+<div class="collapse navbar-collapse" id="menuItems">
     <ul class="navbar-nav me-auto">
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="/" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 Copy URL
             </a>
-            <ul class="dropdown-menu bg-darkgray" aria-labelledby="navbarDropdown">
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown" style="background-color: rgb(22, 75, 97);">
                 <li>
-                    <a class="dropdown-item text-lgray" onclick="copyOP()" role="button">
+                    <a class="dropdown-item" onclick="copyOP()" role="button">
                         <img class="me-1" src="static/img/op_logo.svg" title="open project logo" style="width: 20px;height: 20px;">
                         Copy Open Project endpoint
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item text-lgray" onclick="copyGithub()" role="button">
+                    <a class="dropdown-item" onclick="copyGithub()" role="button">
                         <img class="me-1" src="static/img/github_logo.svg" title="github logo" style="width: 20px;height: 20px;">
                         Copy Github endpoint
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item text-lgray" onclick="copyGitlab()" role="button">
+                    <!-- <a class="dropdown-item text-lgray" onclick="copyGitlab()" role="button">
                         <img class="me-1" src="static/img/gitlab_logo.svg" title="gitlab logo" style="width: 20px;height: 20px;">
                         Copy Gitlab endpoint
-                    </a>
+                    </a> -->
                 </li>
             </ul>
         </li>
     </ul>
 </div>
-<div class="topnav-right">
-    <button type="button" class="btn btn-sync me-3 btn-lg" onclick="loading()">
-        <span class="btn-sync__text">
-            Refresh 
-            <span class="material-symbols-outlined inline-icon">sync</span>
-        </span>
-    </button>
-</div> -->
 {{end}}
 
 {{define "sidebar-top"}}
+
 <div id="back">
-    <a href="/"><span class="material-symbols-outlined">keyboard_backspace</span>&ensp;Back</a>
+    <a onclick="window.history.go(-1);" style="cursor: pointer;"><span class="material-symbols-outlined">keyboard_backspace</span>&ensp;Back</a>
 </div>
+
 {{end}}
 
 {{define "sidebar-bottom"}}
 {{end}}
 
 {{define "content"}}
+<div class="container-fluid px-5">
+    <div class="mb-3">
+        <h1 class="mb-1 title">User manual</h1>
+        <h2 class="mb-4 subtitle">How to use GHOPI?</h2>
+        <h4>1. Getting started</h4>
+        <p>
+            Welcome to the GHOPI's configuration website, our app has been developed to create a channel of communication between Open Project and Github. This service must give project leaders and CEOs more freedom and let them focus on their work and avoid as much as possible unnecessary stops to change repository permissions, create new branches, open and close pull requests, etc.
+        </p>
+        <p>
+            In this website you will be able to configure your GHOPI app. To get more information about how to do it, read carefully the <a href="/usermanual" style="text-decoration: none;" >User Manual</a>. If you have already used our configuration webpage you can go directly to configure Open Project or Github parameters. If some information have not been pushed between apps, just use the refresh button at the top right corner to syncronize both apps.
+        </p>
+        <p>
+            Welcome to the GHOPI's configuration website, our app has been developed to create a channel of communication between Open Project and Github. This service must give project leaders and CEOs more freedom and let them focus on their work and avoid as much as possible unnecessary stops to change repository permissions, create new branches, open and close pull requests, etc.
+        </p>
+        <p>
+            In this website you will be able to configure your GHOPI app. To get more information about how to do it, read carefully the <a href="/usermanual" style="text-decoration: none;" >User Manual</a>. If you have already used our configuration webpage you can go directly to configure Open Project or Github parameters. If some information have not been pushed between apps, just use the refresh button at the top right corner to syncronize both apps.
+        </p>
+        <p>
+            Welcome to the GHOPI's configuration website, our app has been developed to create a channel of communication between Open Project and Github. This service must give project leaders and CEOs more freedom and let them focus on their work and avoid as much as possible unnecessary stops to change repository permissions, create new branches, open and close pull requests, etc.
+        </p>
+        <p>
+            In this website you will be able to configure your GHOPI app. To get more information about how to do it, read carefully the <a href="/usermanual" style="text-decoration: none;" >User Manual</a>. If you have already used our configuration webpage you can go directly to configure Open Project or Github parameters. If some information have not been pushed between apps, just use the refresh button at the top right corner to syncronize both apps.
+        </p>
+        
+    </div>
+</div>
 {{end}}
 
 {{define "scripts"}}
+
 {{end}}
