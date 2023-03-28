@@ -55,7 +55,8 @@
 
         <div class="d-flex justify-content-center">
             <form action="/op/login" method="post" enctype="multipart/form-data">
-                <input class="btn-one mt-2" type="submit" name="submit_op" value="Sign up with Open Project"/>
+                <input class="btn-one mt-2" id="submit-login" type="submit" name="submit_op" value="Sign up with Open Project"/>
+                <p id="login-label" class="mt-2" style="text-align: center;" hidden></p>
             </form>
         </div>
     </div>
@@ -128,4 +129,37 @@
     }
 </script>
 
+<script>
+    const url_config = window.location.href.split(location.pathname)[0] + "/api/get-config";
+    let field = document.getElementById("op_url");
+
+    async function get_config() {
+        let response = await fetch(url_config);
+        let data = await response.text();
+        return data;
+    }
+
+    async function show_url() {
+        config = await get_config();
+        config = JSON.parse(config);
+        if(config['openproject-url'] != "") {
+            document.getElementById("op_url").value = config['openproject-url'];
+        }
+    }
+    async function show_user() {
+        config = await get_config();
+        config = JSON.parse(config);
+        if(config['openproject-user'] != "") {
+            let label = document.getElementById("login-label");
+            label.innerHTML = "Logged in as <b>" + config['openproject-user'] + "</b>";
+            label.hidden = false;
+            document.getElementById("submit-login").value = "Log in Open Project with another account"
+        }
+    }
+    
+    window.onload = function() {
+        show_url();
+        show_user();
+    };
+</script>
 {{end}}

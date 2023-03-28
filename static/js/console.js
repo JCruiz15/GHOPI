@@ -5,7 +5,8 @@ let logs = document.getElementById("logs");
 let startDate = document.getElementById("filterDateStart");
 let endDate = document.getElementById("filterDateEnd");
 let currentLvl = 4;
-let filtered = false;
+let filtered_type = false;
+let fileterd_date = false;
 
 async function get_logs() {
     let response = await fetch(url);
@@ -15,19 +16,34 @@ async function get_logs() {
 
 async function get_console(lvl) {
     log = await get_logs();
-    if(!filtered) {
+    if(!filtered_type && !filtered_date) {
         return log;
-    } else if(filtered && currentLvl < lvl) {
+    } else if(filtered_type && !filtered_date && currentLvl < lvl) {
         return log;
-    } else {
+    } else if(filtered_type && !filtered_date && currentLvl >= lvl) {
         return logs.innerHTML;
+    } else if(filtered_type && filtered_date && currentLvl < lvl) {
+        filtered_date = false
+        return log;
+    } else if(filtered_type && filtered_date && currentLvl >= lvl) {
+        return logs.innerHTML;
+    } else if(!filtered_type && filtered_date && currentLvl < lvl) {
+        filtered_date = false
+        return log;
+    } else if(!filtered_type && filtered_date && currentLvl >= lvl) {
+        return logs.innerHTML;
+    } else {
+        return log;
     }
 }
 
 async function show_logs() {
     logs.innerHTML = await get_logs();
     filterByType(4);
-    filtered=false;
+    filtered_type = false;
+    filtered_date = false;
+    startDate.value = "";
+    endDate.value = "";
 }
 window.onload = show_logs();
 
@@ -36,6 +52,7 @@ async function filterByType(level) {
     currentLvl = level;
     let lines = cmd.split("<br>");
     let resul = "";
+
     for (i=0; i<lines.length-1; i++) {
         l = lines[i].match(/\[([^)]*)\]/)[1];
         switch (level) {
@@ -62,7 +79,10 @@ async function filterByType(level) {
         }
     }
     logs.innerHTML = resul;
-    filtered = true;
+    filtered_type = true;
+    if (!filtered_date && (startDate.value != "" || endDate.value != "")){
+        filterByDate()
+    }
 }
 
 function CheckDate() {
@@ -80,6 +100,7 @@ async function filterByDate() {
     console.log(all_logs);
     let lines = all_logs.split("<br>");
     let resul = "";
+    filtered_date = true;
 
     let start = new Date(startDate.value);
     if(startDate.value === '') {
@@ -110,5 +131,4 @@ async function filterByDate() {
         }
     }
     logs.innerHTML = resul;
-    filtered = true;
 }

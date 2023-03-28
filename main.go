@@ -29,6 +29,8 @@ import (
 
 // TODO - Cuando se ejecute el refresh, si github o openproject esta caido mandar un fatal pero que no se caiga la app.
 
+// TODO - Corregir bugs en los filtros del log.
+
 func init() {
 	log.SetFormatter(&easy.Formatter{
 		TimestampFormat: "02/01/2006-15:04:05",
@@ -63,6 +65,7 @@ func main() {
 	http.HandleFunc("/usermanual", instructions)
 	http.HandleFunc("/logs", logs)
 	http.HandleFunc("/api/get-logs", get_logs)
+	http.HandleFunc("/api/get-config", get_config)
 
 	http.HandleFunc("/config-openproject", config_op)
 	http.HandleFunc("/config-github", config_gh)
@@ -100,7 +103,6 @@ func renderTemplate(w http.ResponseWriter, tmpl string) {
 
 func index(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "index")
-	// http.Redirect(w, r, "/instructions", http.StatusSeeOther)
 }
 
 func instructions(w http.ResponseWriter, _ *http.Request) {
@@ -162,6 +164,23 @@ func get_logs(w http.ResponseWriter, _ *http.Request) {
 	for i := len(lines) - 2; i >= 0; i-- {
 		w.Write(lines[i])
 	}
+}
+
+func get_config(w http.ResponseWriter, _ *http.Request) {
+	var config *gabs.Container
+	config_path := ".config/config.json"
+
+	if _, err := os.Stat(config_path); err == nil {
+		config, err = gabs.ParseJSONFile(config_path)
+		functions.Check(err, "Error")
+	} else {
+		config = gabs.New()
+	}
+	config.Delete("github-token")
+	config.Delete("openproject-token")
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(config.EncodeJSON())
 }
 
 func github_webhook(w http.ResponseWriter, r *http.Request) {
