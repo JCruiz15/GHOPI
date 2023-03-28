@@ -37,7 +37,7 @@ main p {
   font-family: var(--text-font) ;
 }
 
-main :not(.material-symbols-outlined){
+main :not(.material-symbols-outlined, #logs span){
   font-family: var(--text-font);
 }
 

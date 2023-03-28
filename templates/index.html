@@ -38,35 +38,6 @@
 {{end}}
 
 {{define "navbar"}}
-<div class="collapse navbar-collapse" id="menuItems">
-    <ul class="navbar-nav me-auto">
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="/" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Copy URL
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="navbarDropdown" style="background-color: rgb(22, 75, 97);">
-                <li>
-                    <a class="dropdown-item" onclick="copyOP()" role="button">
-                        <img class="me-1" src="static/img/op_logo.svg" title="open project logo" style="width: 20px;height: 20px;">
-                        Copy Open Project endpoint
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" onclick="copyGithub()" role="button">
-                        <img class="me-1" src="static/img/github_logo.svg" title="github logo" style="width: 20px;height: 20px;">
-                        Copy Github endpoint
-                    </a>
-                </li>
-                <li>
-                    <!-- <a class="dropdown-item text-lgray" onclick="copyGitlab()" role="button">
-                        <img class="me-1" src="static/img/gitlab_logo.svg" title="gitlab logo" style="width: 20px;height: 20px;">
-                        Copy Gitlab endpoint
-                    </a> -->
-                </li>
-            </ul>
-        </li>
-    </ul>
-</div>
 <div class="topnav-right">
     <button type="button" class="btn btn-sync me-3 btn-lg" onclick="loading()">
         <span class="btn-sync__text">

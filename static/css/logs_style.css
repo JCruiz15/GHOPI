@@ -1,0 +1,37 @@
+:root {
+    --primary-dark: rgb(6, 40, 61);
+    --secondary-dark: rgb(22, 75, 97);
+    --cerulean: rgb(37, 109, 133);
+    --middle-blue: rgb(54, 145, 194);
+    --principal-blue: rgb(71, 181, 255);
+    --secondary-light: rgb(147, 214, 255);
+    --primary-light: rgb(223, 246, 255);
+  
+    --title-font: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    --subtitle-font: 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont;
+    --text-font: "Calibri", sans-serif, system-ui, -apple-system, BlinkMacSystemFont;
+  }
+
+#logs {
+    color: rgb(235, 235, 249);
+    background-color: rgb(33, 33, 33);
+    height: 20rem;
+    overflow: scroll;
+    font-size: 90%;
+    padding-left: 3%;
+    padding-top: 1%;
+    padding-bottom: 5%;
+    padding-right: 5%;
+    border-radius: 5px;
+    font-family: monospace !important; 
+}
+
+.date-picker {
+    margin-bottom: 3%;
+    padding: 2%;
+    border: rgba(147, 214, 255, 0.3) solid 2px;
+    border-radius: 5px;
+    transition: all 2s;
+    background-color: black;
+}
+

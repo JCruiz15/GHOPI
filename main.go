@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -24,24 +25,14 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-// TODO - CUIDADO con las tareas SIN REPOSITORIO
-
-// TODO - Rename a task when its branch is renamed and viceversa.
-
 // TODO - Make the documentation
 
-// TODO - Api security, prevent XSS, etc.
-
-// TODO - Crear el webhook button para openproject
-
-// TODO - Hacer una función para checkear el estado de los tokens
-
-// TODO - Check if tasks closed need a branch too or not
+// TODO - Cuando se ejecute el refresh, si github o openproject esta caido mandar un fatal pero que no se caiga la app.
 
 func init() {
 	log.SetFormatter(&easy.Formatter{
 		TimestampFormat: "02/01/2006-15:04:05",
-		LogFormat:       "[%lvl%] %time% %msg%\n",
+		LogFormat:       "[%lvl%]\t%time%\t--\t%msg%\n",
 	})
 
 	log.SetOutput(io.MultiWriter(
@@ -71,6 +62,7 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/usermanual", instructions)
 	http.HandleFunc("/logs", logs)
+	http.HandleFunc("/api/get-logs", get_logs)
 
 	http.HandleFunc("/config-openproject", config_op)
 	http.HandleFunc("/config-github", config_gh)
@@ -125,6 +117,51 @@ func config_gh(w http.ResponseWriter, _ *http.Request) {
 
 func logs(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "log")
+}
+
+func get_logs(w http.ResponseWriter, _ *http.Request) {
+	file, err := os.Open("outputs.log")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	// optionally, resize scanner's capacity for lines over 64K, see next example
+	var lines [][]byte
+	for scanner.Scan() {
+		l := scanner.Text()
+		bracket1 := strings.Index(l, "[") + 1
+		bracket2 := strings.Index(l, "]") + 1
+		endDate := strings.Index(l, "\t--\t")
+		var formated_line string
+		var type_color string
+		switch l[bracket1:bracket2] {
+		case "INFO]":
+			type_color = "cyan"
+		case "WARNING]":
+			type_color = "orange"
+		case "ERROR]":
+			type_color = "red"
+		case "FATAL]":
+			type_color = "darkviolet"
+		default:
+			type_color = "white"
+		}
+		if endDate == -1 {
+			formated_line = `<span style="color:` + type_color + `; font-family: monospace;">` + l[:bracket1] + l[bracket1:bracket2] + `</span>` + l[bracket2:]
+		} else {
+			formated_line = `<span style="color:` + type_color + `; font-family: monospace;">` + l[:bracket1] + l[bracket1:bracket2] + `</span><span id="date" style="color:grey; font-family: monospace;">` + l[bracket2:endDate] + `</span>` + l[endDate:]
+		}
+		lines = append(lines, []byte(formated_line), []byte("<br>"))
+	}
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	for i := len(lines) - 2; i >= 0; i-- {
+		w.Write(lines[i])
+	}
 }
 
 func github_webhook(w http.ResponseWriter, r *http.Request) {

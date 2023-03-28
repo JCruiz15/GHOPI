@@ -29,6 +29,35 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 
+                <div class="collapse navbar-collapse" id="menuItems">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="/" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Copy URL
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown" style="background-color: rgb(22, 75, 97);">
+                                <li>
+                                    <a class="dropdown-item" onclick="copyOP()" role="button">
+                                        <img class="me-1" src="static/img/op_logo.svg" title="open project logo" style="width: 20px;height: 20px;">
+                                        Copy Open Project endpoint
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" onclick="copyGithub()" role="button">
+                                        <img class="me-1" src="static/img/github_logo.svg" title="github logo" style="width: 20px;height: 20px;">
+                                        Copy Github endpoint
+                                    </a>
+                                </li>
+                                <!--<li>
+                                    <a class="dropdown-item text-lgray" onclick="copyGitlab()" role="button">
+                                        <img class="me-1" src="static/img/gitlab_logo.svg" title="gitlab logo" style="width: 20px;height: 20px;">
+                                        Copy Gitlab endpoint
+                                    </a>
+                                </li> -->
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
                 {{template "navbar" .}}
             </nav>
     </header>
@@ -56,12 +85,17 @@
 
     <!-- Scripts -->
     <script>
-        const u = window.location.href
         function getPathFromUrl(u) {
-            return u.split(/[?#]/)[0];
+            if (location.pathname == "/") {
+                return u.split(/[?#]/)[0];
+            } else {
+                return u.split(location.pathname)[0]+"/"
+            }
         }
-        const url_copy = getPathFromUrl(u)
+        let url_copy
+
         function copyOP() {
+            url_copy = getPathFromUrl(window.location.href)
             const url = url_copy + "api/openproject";
             navigator.clipboard.writeText(url);
             Swal.fire({
@@ -72,6 +106,7 @@
         }
 
         function copyGithub() {
+            url_copy = getPathFromUrl(window.location.href)
             const url = url_copy + "api/github";
             navigator.clipboard.writeText(url);
             Swal.fire({
@@ -82,6 +117,7 @@
         }
 
         function copyGitlab() {
+            url_copy = getPathFromUrl(window.location.href)
             const url = url_copy + "api/gitlab";
             navigator.clipboard.writeText(url);
             Swal.fire({
