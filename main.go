@@ -6,15 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/fs"
 	"net/http"
 	"os"
 	"strings"
 	"text/template"
 	"time"
 
-	"web-service-gin/applications"
-	"web-service-gin/functions"
+	"GHOPI/oauths"
+	"GHOPI/utils"
 
 	"github.com/buger/jsonparser"
 	"github.com/joho/godotenv"
@@ -25,11 +24,11 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-// TODO - Make the documentation
+// TODO - Make the documentation.
 
 // TODO - Cuando se ejecute el refresh, si github o openproject esta caido mandar un fatal pero que no se caiga la app.
 
-// TODO - Corregir bugs en los filtros del log.
+// TODO - Redireccionar a index cuando la url esté mal escrita.
 
 func init() {
 	log.SetFormatter(&easy.Formatter{
@@ -54,8 +53,8 @@ func init() {
 }
 
 func main() {
-	var github applications.Github = *applications.NewGithub()
-	var openproject applications.Openproject = *applications.NewOpenproject()
+	var github oauths.Github = *oauths.NewGithub()
+	var openproject oauths.Openproject = *oauths.NewOpenproject()
 
 	fileServer := http.FileServer(http.Dir("./static"))
 
@@ -64,15 +63,14 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/usermanual", instructions)
 	http.HandleFunc("/logs", logs)
-	http.HandleFunc("/api/get-logs", get_logs)
-	http.HandleFunc("/api/get-config", get_config)
+	http.HandleFunc("/config-openproject", configOP)
+	http.HandleFunc("/config-github", configGH)
 
-	http.HandleFunc("/config-openproject", config_op)
-	http.HandleFunc("/config-github", config_gh)
-
+	http.HandleFunc("/api/get-logs", getLogs)
+	http.HandleFunc("/api/get-config", getConfig)
 	http.HandleFunc("/api/openproject", PostOpenProject)
 	http.HandleFunc("/api/github", PostGithub)
-	http.HandleFunc("/api/refresh", refresh_proxy)
+	http.HandleFunc("/api/refresh", refreshProxy)
 
 	http.HandleFunc("/github/login", github.LoginHandler)
 	http.HandleFunc("/github/login/callback", github.CallbackHandler)
@@ -80,7 +78,7 @@ func main() {
 		func(w http.ResponseWriter, r *http.Request) {
 			github.LoggedinHandler(w, r, nil, "")
 		})
-	http.HandleFunc("/github/webhook", github_webhook)
+	http.HandleFunc("/github/webhook", githubWebhook)
 
 	http.HandleFunc("/op/login", openproject.LoginHandler)
 	http.HandleFunc("/op/login/callback", openproject.CallbackHandler)
@@ -88,12 +86,14 @@ func main() {
 		func(w http.ResponseWriter, r *http.Request) {
 			openproject.LoggedinHandler(w, r, nil, "")
 		})
-	http.HandleFunc("/op/save-url", save_openproject_url)
+	http.HandleFunc("/op/save-url", saveOPurl)
+	http.HandleFunc("/-/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	port := 5002
 	log.Info(fmt.Sprintf("Application running on port %d", port))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
-
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string) {
@@ -109,11 +109,11 @@ func instructions(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "instructions")
 }
 
-func config_op(w http.ResponseWriter, _ *http.Request) {
+func configOP(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "openproject_config")
 }
 
-func config_gh(w http.ResponseWriter, _ *http.Request) {
+func configGH(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "github_config")
 }
 
@@ -121,12 +121,10 @@ func logs(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "log")
 }
 
-func get_logs(w http.ResponseWriter, _ *http.Request) {
+func getLogs(w http.ResponseWriter, _ *http.Request) {
 	file, err := os.Open("outputs.log")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
+	utils.Check(err, "error", "Error 500. Logs file could not be open")
+	defer file.Close() // TODO - errcheck
 
 	scanner := bufio.NewScanner(file)
 	// optionally, resize scanner's capacity for lines over 64K, see next example
@@ -158,32 +156,31 @@ func get_logs(w http.ResponseWriter, _ *http.Request) {
 		lines = append(lines, []byte(formated_line), []byte("<br>"))
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		log.Error("Error 500. Error while reading log file. The file may have not been found")
 	}
 
 	for i := len(lines) - 2; i >= 0; i-- {
-		w.Write(lines[i])
+		w.Write(lines[i]) // TODO - errcheck
 	}
 }
 
-func get_config(w http.ResponseWriter, _ *http.Request) {
+func getConfig(w http.ResponseWriter, _ *http.Request) {
 	var config *gabs.Container
-	config_path := ".config/config.json"
 
-	if _, err := os.Stat(config_path); err == nil {
-		config, err = gabs.ParseJSONFile(config_path)
-		functions.Check(err, "Error")
+	if _, err := os.Stat(utils.Config_path); err == nil {
+		config, err = gabs.ParseJSONFile(utils.Config_path)
+		utils.Check(err, "error", "Error 500. Config file could not be read")
 	} else {
 		config = gabs.New()
 	}
-	config.Delete("github-token")
-	config.Delete("openproject-token")
+	config.Delete("github-token")      // TODO - errcheck
+	config.Delete("openproject-token") // TODO - errcheck
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(config.EncodeJSON())
+	w.Write(config.EncodeJSON()) // TODO - errcheck
 }
 
-func github_webhook(w http.ResponseWriter, r *http.Request) {
+func githubWebhook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var orgName string = ""
 
@@ -191,7 +188,7 @@ func github_webhook(w http.ResponseWriter, r *http.Request) {
 		jsonOrgName, _ := io.ReadAll(r.Body)
 		var errorJSON error
 		orgName, errorJSON = jsonparser.GetString(jsonOrgName, "organizationName")
-		functions.Check(errorJSON, "error")
+		utils.Check(errorJSON, "error", "Error 500. The server did not received organization name correctly")
 	}
 
 	if orgName != "" {
@@ -224,31 +221,31 @@ func github_webhook(w http.ResponseWriter, r *http.Request) {
 			bytes.NewBuffer(bJSON),
 		)
 		if err != nil {
-			log.Panic("API Request creation failed")
+			log.Fatal("Github API Request creation failed on webhook creation")
 		}
 
 		req.Header.Set("Accept", "application/vnd.github+json")
 
 		f, err := os.Open(".config/config.json")
-		functions.Check(err, "error")
+		utils.Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
 		config, _ := io.ReadAll(f)
 		token, _ := jsonparser.GetString(config, "github-token")
 		req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			log.Panic("Request failed")
+			log.Fatal("Github API Request failed on webhook creation. This issue is due to Github availability")
 		}
 		r, _ := io.ReadAll(resp.Body)
 
 		name, getErr := jsonparser.GetString(r, "name")
-		functions.Check(getErr, "error")
+		utils.Check(getErr, "error", "Error on reading if the webhook was correctly created")
 
 		if name == "web" {
 			id, _ := jsonparser.GetInt(r, "id")
-			log.Info(fmt.Sprintf("Github webhook created with id %d", id))
+			log.Info(fmt.Sprintf("Github webhook created successfully with id %d", id))
 		}
-		w.Write(r)
+		w.Write(r) // TODO - errcheck
 
 	} else {
 		output := map[string]interface{}{
@@ -256,35 +253,34 @@ func github_webhook(w http.ResponseWriter, r *http.Request) {
 			"status":  http.StatusInternalServerError,
 		}
 		resul, _ := json.Marshal(output)
-		w.Write(resul)
+		w.Write(resul) // TODO - errcheck
 	}
 
 }
 
-func save_openproject_url(w http.ResponseWriter, r *http.Request) {
+func saveOPurl(w http.ResponseWriter, r *http.Request) {
 	type save_json struct {
 		OP_url string `json:"op_url"`
 	}
 	b_body, err := io.ReadAll(r.Body)
-	functions.Check(err, "error")
+	utils.Check(err, "error", "Error 500. Internal server error. Open Project URL was not sent correctly and it could not be read")
 	var body save_json
-	json.Unmarshal(b_body, &body)
+	json.Unmarshal(b_body, &body) // TODO - errcheck
 
 	var config *gabs.Container
-	config_path := ".config/config.json"
 
-	if _, err := os.Stat(config_path); err == nil {
-		config, err = gabs.ParseJSONFile(config_path)
-		functions.Check(err, "Error")
+	if _, err := os.Stat(utils.Config_path); err == nil {
+		config, err = gabs.ParseJSONFile(utils.Config_path)
+		utils.Check(err, "error", "Error 500. Config file could not be read")
 	} else {
 		config = gabs.New()
 	}
-	config.Set(body.OP_url, "openproject-url")
+	config.Set(body.OP_url, "openproject-url") // TODO - errcheck
 
-	f, err := os.Create(config_path)
-	functions.Check(err, "Error")
-	defer f.Close()
-	f.Write(config.BytesIndent("", "\t"))
+	f, err := os.Create(utils.Config_path)
+	utils.Check(err, "Error", "Error creating config file on its destination path ('./.config')")
+	defer f.Close()                       // TODO - errcheck
+	f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
 }
 
 func PostOpenProject(w http.ResponseWriter, r *http.Request) {
@@ -293,29 +289,31 @@ func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println(string(byte_body))
 
 		if err != nil {
+			log.Fatal("Error 500. Internal Server Error. On Open Project post receiving an unexpected error has occured.")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		go requestOpenProject(byte_body)
-		log.Info("Open Projet POST received")
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
 }
 
 func requestOpenProject(data []byte) {
-	repo, err := jsonparser.GetString(data, "work_package", functions.RepoField)
+	action, _ := jsonparser.GetString(data, "action")
+	log.Info(fmt.Sprintf("Open Project POST received. Action: '%s' ", action))
+	repo, err := jsonparser.GetString(data, "work_package", utils.GetCustomFields().RepoField)
 	if err != nil {
-		log.Warn("Repository URL not found")
+		log.Warn("Github repository URL was not found. Check if the repository exists or if the master github user has access to this repository")
 		return
 	}
 	wp_type, err2 := jsonparser.GetString(data, "work_package", "_embedded", "type", "name")
-	functions.Check(err2, "warn")
+	utils.Check(err2, "error", "Type of task was not found on Open Project post")
 
 	if wp_type == "Task" {
 		switch {
 		case strings.Contains(string(repo), "github"):
-			functions.Github_options(data)
+			utils.GithubOptions(data)
 		default:
 			log.Warn("Repository website not supported")
 		}
@@ -329,38 +327,49 @@ func PostGithub(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		go functions.Openproject_options(byte_body)
-		log.Info("Github POST received")
+		go utils.OpenProjectOptions(byte_body)
+		t, _ := jsonparser.GetString(byte_body, "ref_type")
+		fullname, _ := jsonparser.GetString(byte_body, "repository", "fullname")
+		user, _ := jsonparser.GetString(byte_body, "sender", "login")
+
+		log.Info(fmt.Sprintf("Github POST received. Post type: '%s'; Repository: '%s'; User: '%s' ", t, fullname, user))
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
 }
 
-func refresh_proxy(w http.ResponseWriter, _ *http.Request) {
+func refreshProxy(w http.ResponseWriter, _ *http.Request) { // TODO - Read lastRefresh in config not in lastRefresh.txt
 	var lastRefresh time.Time
-	lastRefresh_path := ".config/lastRefresh.txt"
+	var config *gabs.Container
 
-	if _, err := os.Stat(lastRefresh_path); err == nil {
-		lr, err := os.Open(lastRefresh_path)
-		functions.Check(err, "Error")
-		read_lr, _ := io.ReadAll(lr)
-		if string(read_lr) != "" {
+	// TODO - Send a ping to github and open project if not 200 return error
+
+	if _, err := os.Stat(utils.Config_path); err == nil {
+		config, err = gabs.ParseJSONFile(utils.Config_path)
+		utils.Check(err, "Error", "Error 500. Config file could not be read")
+		read_ls := config.Search("lastSync").Data().(string)
+
+		if string(read_ls) != "" {
 			var parseError error
-			lastRefresh, parseError = time.Parse("2006-01-02T15:04:05Z", string(read_lr))
-			functions.Check(parseError, "error")
+			lastRefresh, parseError = time.Parse("2006-01-02T15:04:05Z", string(read_ls))
+			utils.Check(parseError, "error", "The last synchronization date could not be parsed correctly. Check if it has the correct format, which is 'YYYY-MM-DDTHH:mm:ssZ'")
 		} else {
 			lastRefresh = time.Date(2000, 1, 1, 0, 0, 1, 0, time.UTC) // Set lastRefresh to 2000-01-01T00:00:01.0Z
-			os.WriteFile(lastRefresh_path, []byte(lastRefresh.Format("2006-01-02T15:04:05Z")), fs.FileMode(os.O_TRUNC))
+			config.Set(lastRefresh.Format("2006-01-02T15:04:05Z"), "lastSync")
 		}
 	} else {
 		lastRefresh = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC) // Set lastRefresh to 2000-01-01T00:00:00.0Z
-		_, err := os.Create(lastRefresh_path)
-		functions.Check(err, "error")
-		os.WriteFile(lastRefresh_path, []byte(lastRefresh.Format("2006-01-02T15:04:05Z")), fs.FileMode(os.O_TRUNC))
+		config := gabs.New()
+		config.Set(lastRefresh.Format("2006-01-02T15:04:05Z"), "lastSync") // TODO - errcheck
 	}
+	f, err := os.Create(utils.Config_path)
+	utils.Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+	defer f.Close()                       // TODO - errcheck
+	f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+
 	c := make(chan string)
-	go functions.Refresh(lastRefresh, c)
+	go utils.Refresh(lastRefresh, c)
 	result := <-c
 
-	w.Write([]byte(result))
+	w.Write([]byte(result)) // TODO - errcheck
 }

@@ -1,6 +1,7 @@
-package applications
+package oauths
 
 import (
+	"GHOPI/utils"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,7 +11,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"web-service-gin/functions"
 
 	"github.com/Jeffail/gabs/v2"
 )
@@ -42,29 +42,28 @@ func NewOpenproject() *Openproject {
 
 func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data map[string]string, Token string) {
 	if Data == nil {
-		fmt.Fprint(w, "UNAUTHORIZED")
+		fmt.Fprint(w, "UNAUTHORIZED") // TODO - errcheck
 		return
 	} else {
 		var config *gabs.Container
-		config_path := ".config/config.json"
 
-		if _, err := os.Stat(config_path); err == nil {
-			config, err = gabs.ParseJSONFile(config_path)
-			functions.Check(err, "Error")
+		if _, err := os.Stat(utils.Config_path); err == nil {
+			config, err = gabs.ParseJSONFile(utils.Config_path)
+			utils.Check(err, "Error", "Error 500. Config file could not be read")
 		} else {
 			config = gabs.New()
 		}
 
-		config.Set(Data["name"], "openproject-user")
-		config.Set(Token, "openproject-token")
+		config.Set(Data["name"], "openproject-user") // TODO - errcheck
+		config.Set(Token, "openproject-token")       // TODO - errcheck
 
-		f, err := os.Create(config_path)
-		functions.Check(err, "Error")
-		defer f.Close()
-		f.Write(config.BytesIndent("", "\t"))
+		f, err := os.Create(utils.Config_path)
+		utils.Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+		defer f.Close()                       // TODO - errcheck
+		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
 	}
 
-	go functions.CheckCustomFields()
+	go utils.CheckCustomFields()
 
 	http.Redirect(w, r, "/config-openproject", http.StatusMovedPermanently)
 }
@@ -79,11 +78,11 @@ func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// s := uuid.New().String()
 	// op.states[fmt.Sprint(len(op.states))] = s
 
-	op_url := functions.Get_OP_uri()
+	utils.OP_url = utils.GetOPuri()
 
 	redirectURL := fmt.Sprintf(
 		"%s/oauth/authorize?response_type=code&client_id=%s&scope=%s&redirect_uri=%s&prompt=consent",
-		op_url,
+		utils.OP_url,
 		op.clientID,
 		"api_v3",
 		fmt.Sprintf("%s/op/login/callback", URL),
@@ -94,7 +93,7 @@ func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (op *Openproject) getAccessToken(code string, URL string) string {
-	op_url := functions.Get_OP_uri()
+	utils.OP_url = utils.GetOPuri()
 
 	requestBody := url.Values{}
 	requestBody.Set("grant_type", "authorization_code")
@@ -106,7 +105,7 @@ func (op *Openproject) getAccessToken(code string, URL string) string {
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("%s/oauth/token", op_url),
+		fmt.Sprintf("%s/oauth/token", utils.OP_url),
 		strings.NewReader(requestBodyEnc),
 	)
 	if err != nil {
@@ -133,17 +132,17 @@ func (op *Openproject) getAccessToken(code string, URL string) string {
 	}
 
 	var finalresp AccessTokenResponse
-	json.Unmarshal(respbody, &finalresp)
+	json.Unmarshal(respbody, &finalresp) // TODO - errcheck
 
 	return finalresp.AccessToken
 }
 
 func (op *Openproject) getData(accessToken string) map[string]string {
-	op_url := functions.Get_OP_uri()
+	utils.OP_url = utils.GetOPuri()
 
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/api/v3/users/me", op_url),
+		fmt.Sprintf("%s/api/v3/users/me", utils.OP_url),
 		nil,
 	)
 	if err != nil {
@@ -160,7 +159,7 @@ func (op *Openproject) getData(accessToken string) map[string]string {
 
 	respbody, _ := io.ReadAll(resp.Body)
 	var jsonMap map[string]string
-	json.Unmarshal(respbody, &jsonMap)
+	json.Unmarshal(respbody, &jsonMap) // TODO - errcheck
 	return jsonMap
 }
 

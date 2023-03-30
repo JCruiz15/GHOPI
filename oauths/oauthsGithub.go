@@ -1,6 +1,7 @@
-package applications
+package oauths
 
 import (
+	"GHOPI/utils"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -8,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"web-service-gin/functions"
 
 	"github.com/Jeffail/gabs/v2"
 	"github.com/google/uuid"
@@ -44,26 +44,25 @@ func NewGithub() *Github {
 
 func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data map[string]string, Token string) {
 	if Data == nil {
-		fmt.Fprint(w, "UNAUTHORIZED")
+		fmt.Fprint(w, "UNAUTHORIZED") // TODO - errcheck
 		return
 	} else {
 		var config *gabs.Container
-		config_path := ".config/config.json"
 
-		if _, err := os.Stat(config_path); err == nil {
-			config, err = gabs.ParseJSONFile(config_path)
-			functions.Check(err, "Error")
+		if _, err := os.Stat(utils.Config_path); err == nil {
+			config, err = gabs.ParseJSONFile(utils.Config_path)
+			utils.Check(err, "Error", "Error 500. Config file could not be read")
 		} else {
 			config = gabs.New()
 		}
 
-		config.Set(Data["login"], "github-user")
-		config.Set(Token, "github-token")
+		config.Set(Data["login"], "github-user") // TODO - errcheck
+		config.Set(Token, "github-token")        // TODO - errcheck
 
-		f, err := os.Create(config_path)
-		functions.Check(err, "Error")
-		defer f.Close()
-		f.Write(config.BytesIndent("", "\t"))
+		f, err := os.Create(utils.Config_path)
+		utils.Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+		defer f.Close()                       // TODO - errcheck
+		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
 	}
 	// URL := fmt.Sprintf("https://%s", r.Host)
 
@@ -126,7 +125,7 @@ func (gh Github) getAccessToken(code string, URL string) string {
 	}
 
 	var finalresp AccessTokenResponse
-	json.Unmarshal(respbody, &finalresp)
+	json.Unmarshal(respbody, &finalresp) // TODO - errcheck
 	return finalresp.AccessToken
 }
 
@@ -150,7 +149,7 @@ func (gh Github) getData(accessToken string) map[string]string {
 
 	respbody, _ := io.ReadAll(resp.Body)
 	var jsonMap map[string]string
-	json.Unmarshal(respbody, &jsonMap)
+	json.Unmarshal(respbody, &jsonMap) // TODO - errcheck
 	return jsonMap
 }
 

@@ -1,4 +1,4 @@
-package applications
+package oauths
 
 import "net/http"
 

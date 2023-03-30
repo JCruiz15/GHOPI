@@ -22,6 +22,7 @@
         border-radius: 5px;
         font-family: "Calibri", sans-serif, system-ui, -apple-system, BlinkMacSystemFont;
         color: rgb(6, 40, 61);
+        background-color: white;
     }
 </style>
 {{end}}
@@ -46,10 +47,7 @@
 {{define "content"}}
 <div class="container-fluid px-5">
     <div class="mb-3">
-        <h1 class="title">App logs</h1>
-        <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras ut nibh enim. Aenean leo nibh, lacinia a lobortis eget, placerat a ante. Aenean quis condimentum urna. In leo est, rutrum finibus tempus ac, tincidunt mattis sapien. Integer nunc eros, venenatis ac gravida eget, rhoncus ac lectus. Nulla facilisi. Donec venenatis malesuada tincidunt. Sed vehicula eros quis diam aliquam pellentesque. Etiam accumsan nibh non ullamcorper sollicitudin. Suspendisse dui nibh, suscipit eu nisi a, pretium vestibulum dui. Donec sed libero quis metus tempor condimentum eleifend ac felis. Curabitur at leo ut nunc luctus vehicula. Suspendisse dignissim leo ut leo imperdiet, consectetur sollicitudin lacus porta. Etiam sit amet elit ornare, pharetra metus vitae, varius dolor.
-        </p>
+        <h1 class="title mb-4">App logs</h1>
         <div class="row justify-content-between">
             <div class="dropdown col-lg-auto">
                 <button class="btn-one dropdown-toggle mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -74,7 +72,7 @@
             </div>
         </div>
         
-        <div id="logs" tabindex="-1"></div>
+        <div id="logs" tabindex="-1" style="height: 62vh;"></div>
     </div>
 </div>
 
