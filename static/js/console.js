@@ -97,7 +97,6 @@ function CheckDate() {
 
 async function filterByDate() {
     all_logs = await get_console(currentLvl);
-    console.log(all_logs);
     let lines = all_logs.split("<br>");
     let resul = "";
     filtered_date = true;
@@ -126,7 +125,7 @@ async function filterByDate() {
             date = new Date("");
         }
 
-        if (date.setHours(1,0,0,0) >= start && date.setHours(1,0,0,0) <= end) { // It'll show dates in between the limits
+        if (date.setHours(23, 59, 59, 999) >= start && date.setHours(0, 0, 0, 0) <= end) { // It'll show dates in between the limits
             resul = resul.concat(lines[i], "<br>");
         }
     }

@@ -83,11 +83,14 @@
             return res.text()
         }).then(text => {
             theButton.classList.remove("btn-sync--loading");
-            let type = "";
-            if (text.startsWith("Error")) { type = "error" }
-            else { type = "success" }
+            let type = "success";
+            let title = "Finished refreshing tasks";
+            if (text.startsWith("Error")) {
+                type = "error";
+                title = "Error when refreshing"
+            }
             Swal.fire({
-                title: "Finished refreshing tasks",
+                title: title,
                 text: text,
                 icon: type
             })

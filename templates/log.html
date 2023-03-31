@@ -68,7 +68,7 @@
                 <button class="btn-one mb-3" type="button" onclick="filterByDate()">Filter by date</button>
             </div>
             <div class="col-lg-2">
-                <button class="btn-two mb-3" type="button" onclick="show_logs()">Reload</button>
+                <button class="btn-two mb-3" type="button" onclick="show_logs()">Reset</button>
             </div>
         </div>
         
@@ -84,24 +84,27 @@
     <script src="static/js/console.js"></script>
 
     <script>
-        // const url = window.location.href.split(location.pathname)[0] + "/api/refresh";
+        const url_ref = window.location.href.split(location.pathname)[0] + "/api/refresh";
         const theButton = document.querySelector(".btn-sync");
 
         function refresh(){
-            fetch(url).then(res => {
-                return res.text()
-            }).then(text => {
-                theButton.classList.remove("btn-sync--loading");
-                let type = "";
-                if (text.startsWith("Error")) { type = "error" }
-                else { type = "success" }
-                Swal.fire({
-                    title: "Finished refreshing tasks",
-                    text: text,
-                    icon: type
-                })
+        fetch(url_ref).then(res => {
+            return res.text()
+        }).then(text => {
+            theButton.classList.remove("btn-sync--loading");
+            let type = "success";
+            let title = "Finished refreshing tasks";
+            if (text.startsWith("Error")) {
+                type = "error";
+                title = "Error when refreshing"
+            }
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: type
             })
-        }
+        })
+    }
         function loading(){
             refresh();
             theButton.classList.add("btn-sync--loading");

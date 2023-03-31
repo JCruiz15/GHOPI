@@ -103,6 +103,9 @@ func renderTemplate(w http.ResponseWriter, tmpl string) {
 
 func index(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "index")
+	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
+	// 	log.Warn("Github or Open Project token is not working or it has expired. Log in sign in to use the app.")
+	// }
 }
 
 func instructions(w http.ResponseWriter, _ *http.Request) {
@@ -111,14 +114,23 @@ func instructions(w http.ResponseWriter, _ *http.Request) {
 
 func configOP(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "openproject_config")
+	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
+	// 	log.Warn("Github or Open Project token is not working or it has expired. Log in sign in to use the app.")
+	// }
 }
 
 func configGH(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "github_config")
+	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
+	// 	log.Warn("Github or Open Project token is not working or it has expired. Log in sign in to use the app.")
+	// }
 }
 
 func logs(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "log")
+	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
+	// 	log.Warn("Github or Open Project token is not working or it has expired. Log in sign in to use the app.")
+	// }
 }
 
 func getLogs(w http.ResponseWriter, _ *http.Request) {
@@ -342,7 +354,10 @@ func refreshProxy(w http.ResponseWriter, _ *http.Request) { // TODO - Read lastR
 	var lastRefresh time.Time
 	var config *gabs.Container
 
-	// TODO - Send a ping to github and open project if not 200 return error
+	if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
+		w.Write([]byte("Error 400. The connection with Open Project or Github is not done or has expired. Log in them before trying to refresh"))
+		return
+	}
 
 	if _, err := os.Stat(utils.Config_path); err == nil {
 		config, err = gabs.ParseJSONFile(utils.Config_path)
@@ -363,7 +378,7 @@ func refreshProxy(w http.ResponseWriter, _ *http.Request) { // TODO - Read lastR
 		config.Set(lastRefresh.Format("2006-01-02T15:04:05Z"), "lastSync") // TODO - errcheck
 	}
 	f, err := os.Create(utils.Config_path)
-	utils.Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+	utils.Check(err, "fatal", "Error 500. Config file could not be created on refresh")
 	defer f.Close()                       // TODO - errcheck
 	f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
 

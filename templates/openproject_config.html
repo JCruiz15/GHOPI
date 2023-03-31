@@ -75,11 +75,14 @@
             return res.text()
         }).then(text => {
             theButton.classList.remove("btn-sync--loading");
-            let type = "";
-            if (text.startsWith("Error")) { type = "error" }
-            else { type = "success" }
+            let type = "success";
+            let title = "Finished refreshing tasks";
+            if (text.startsWith("Error")) {
+                type = "error";
+                title = "Error when refreshing"
+            }
             Swal.fire({
-                title: "Finished refreshing tasks",
+                title: title,
                 text: text,
                 icon: type
             })
@@ -142,16 +145,17 @@
     async function show_url() {
         config = await get_config();
         config = JSON.parse(config);
-        if(config['openproject-url'] != "") {
+        if(config['openproject-url'] != "" && config['openproject-url'] != undefined) {
             document.getElementById("op_url").value = config['openproject-url'].split("://")[1];
         }
     }
+
     async function show_user() {
         config = await get_config();
         config = JSON.parse(config);
-        if(config['openproject-user'] != "") {
+        if(config['openproject-user'] != "" && config['openproject-user'] != undefined) {
             let label = document.getElementById("login-label");
-            label.innerHTML = "Logged in as <b>" + config['openproject-user'] + "</b>";
+            label.innerHTML = "Signed in as <b>" + config['openproject-user'] + "</b>";
             label.hidden = false;
             document.getElementById("submit-login").value = "Log in Open Project with another account"
         }

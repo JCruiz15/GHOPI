@@ -72,7 +72,7 @@ func GithubOptions(data []byte) {
 				strings.NewReader(""),
 			)
 
-			f, err := os.Open(".config/config.json")
+			f, err := os.Open(Config_path)
 			Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
 			defer f.Close() // TODO - errcheck
 			config, _ := io.ReadAll(f)
@@ -162,4 +162,145 @@ func OpenProjectOptions(data []byte) {
 			log.Info(fmt.Sprintf("Branch [%s] has been deleted", branch))
 		}
 	}
+}
+
+// ====== PINGS ======
+
+func CheckConnectionGithub() bool {
+
+	config, err := gabs.ParseJSONFile(Config_path)
+	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	token := config.Search("github-token").Data().(string)
+	user := config.Search("github-user").Data().(string)
+
+	if token == "" || user == "" {
+		log.Warn("Error when obtaining github token and user. Log in in github to use the app")
+		config.Set("", "github-token")
+		config.Set("", "github-user")
+
+		f, err := os.Create(Config_path)
+		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+		defer f.Close()                       // TODO - errcheck
+		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+
+		return false
+	}
+
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("https://api.github.com/users/%s", user),
+		nil,
+	)
+	Check(err, "error", "")
+
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+
+	resp, _ := http.DefaultClient.Do(req)
+	ratelimit := resp.Header.Get("x-ratelimit-limit")
+
+	if ratelimit == "5000" || resp.StatusCode != 200 {
+		return true
+	} else {
+		config.Set("", "github-token")
+		config.Set("", "github-user")
+
+		f, err := os.Create(Config_path)
+		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+		defer f.Close()                       // TODO - errcheck
+		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		return false
+	}
+
+}
+
+func CheckConnectionOpenProject() bool {
+	config, err := gabs.ParseJSONFile(Config_path)
+	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	token := config.Search("openproject-token").Data().(string)
+	OP_url = config.Search("openproject-url").Data().(string)
+
+	if token == "" || OP_url == "" {
+		log.Warn("Error when obtaining Open Project token and url. Log in in Open Project to use the app")
+
+		config.Set("", "openproject-token")
+		config.Set("", "openproject-user")
+		config.Set("", "openproject-url")
+
+		f, err := os.Create(Config_path)
+		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+		defer f.Close()                       // TODO - errcheck
+		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+
+		return false
+	}
+
+	req, _ := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/api/v3/users/me", OP_url),
+		nil,
+	)
+	Check(err, "error", "")
+
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Warn("Error 404. Open Project url is not well written or it does not exist. Check the Open Project url status")
+
+		config.Set("", "openproject-token")
+		config.Set("", "openproject-user")
+		config.Set("", "openproject-url")
+
+		f, err := os.Create(Config_path)
+		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+		defer f.Close()                       // TODO - errcheck
+		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+
+		return false
+	}
+	if resp.StatusCode != 200 {
+		log.Warn("Open Project did not return a valid response when checking token status")
+
+		config.Set("", "openproject-token")
+		config.Set("", "openproject-user")
+		config.Set("", "openproject-url")
+
+		f, err := os.Create(Config_path)
+		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+		defer f.Close()                       // TODO - errcheck
+		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+
+		return false
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	Check(err, "error", "Error when reading body to check Open Project token status")
+
+	me, err := jsonparser.GetString(body, "name")
+	if Check(err, "error", "") {
+		config.Set("", "openproject-token")
+		config.Set("", "openproject-user")
+		config.Set("", "openproject-url")
+
+		f, err := os.Create(Config_path)
+		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+		defer f.Close()                       // TODO - errcheck
+		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+
+		return false
+	}
+	if me == "Anonymus" {
+		config.Set("", "openproject-token")
+		config.Set("", "openproject-user")
+		config.Set("", "openproject-url")
+
+		f, err := os.Create(Config_path)
+		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+		defer f.Close()                       // TODO - errcheck
+		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+
+		return false
+	}
+	return true
+
 }

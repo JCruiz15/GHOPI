@@ -66,6 +66,7 @@ func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data ma
 	}
 	// URL := fmt.Sprintf("https://%s", r.Host)
 
+	log.Info("Github log in has been successful")
 	http.Redirect(w, r, "/config-github", http.StatusMovedPermanently)
 }
 
@@ -104,17 +105,13 @@ func (gh Github) getAccessToken(code string, URL string) string {
 		"https://github.com/login/oauth/access_token",
 		bytes.NewBuffer(requestJSON),
 	)
-	if err != nil {
-		log.Panic("Request creation failed")
-	}
+	utils.Check(err, "error", "Github API request creation to get oauth access token failed")
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Panic("Request failed")
-	}
+	utils.Check(err, "error", "Github API call to get oauth access token failed")
 
 	respbody, _ := io.ReadAll(resp.Body)
 
@@ -135,17 +132,13 @@ func (gh Github) getData(accessToken string) map[string]string {
 		"https://api.github.com/user",
 		nil,
 	)
-	if err != nil {
-		log.Panic("API Request creation failed")
-	}
+	utils.Check(err, "error", "Github API request creation to get oauth access token failed")
 
 	authorizationHeaderValue := fmt.Sprintf("token %s", accessToken)
 	req.Header.Set("Authorization", authorizationHeaderValue)
 
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Panic("Request failed")
-	}
+	utils.Check(err, "error", "Github API call to get oauth access token failed")
 
 	respbody, _ := io.ReadAll(resp.Body)
 	var jsonMap map[string]string
@@ -156,26 +149,12 @@ func (gh Github) getData(accessToken string) map[string]string {
 func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	security := r.URL.Query().Get("state")
-	secured := false
 	for key, value := range gh.states {
 		if value == security {
-			fmt.Println("Secure transaction")
-			secured = true
+			log.Info("Github log in is secure")
 			delete(gh.states, key)
 		}
 	}
-	fmt.Printf("secured? %t\n", secured)
-	// if !secured {
-	// 	_, err := os.Open(".tokens.txt")
-	// 	if err != nil {
-	// 		fmt.Println("Error - no access")
-	// 		return
-	// 		// log.Panic("Third party system access attempt")
-	// 	}
-	// 	// log.Panic("Third party system connection")
-	// 	fmt.Print("ERROR")
-	// 	fmt.Println(gh.states)
-	// }
 
 	URL := fmt.Sprintf("https://%s", r.Host)
 
