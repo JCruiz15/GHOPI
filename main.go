@@ -178,7 +178,7 @@ func getLogs(w http.ResponseWriter, _ *http.Request) {
 		log.Error("Error 500. Error while reading log file. The file may have not been found")
 	}
 
-	for i := len(lines) - 2; i >= 0; i-- {
+	for i := len(lines) - 1; i >= 0; i-- {
 		w.Write(lines[i]) // TODO - errcheck
 	}
 }

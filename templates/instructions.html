@@ -45,11 +45,15 @@
 {{end}}
 
 {{define "sidebar-bottom"}}
+<a class="secondary-text" href="/docs#configuringGHOPI">&emsp;1. GHOPI's configuration</a>
+<a class="secondary-text" href="/docs#configureOpenProject">&emsp;&emsp;1.1. Configuring Open Project</a>
+<a class="secondary-text" href="/docs#configureGithub">&emsp;&emsp;1.2. Configuring Github</a>
+<a class="secondary-text" href="/docs#configuringGHuser">&emsp;&emsp;&emsp;1.2.1. Logging in Github</a>
 {{end}}
 
 {{define "content"}}
 <div class="container-fluid" style="padding-right: 7vw; padding-left: 5vw;">
-    <div class="mb-3" style="text-align: justify;">
+    <div class="mb-3" >
         <h1 class="mb-1 title">User manual</h1>
         <h2 class="mb-4 subtitle">How to use GHOPI?</h2>
         Welcome to the user manual for GHOPI, our synchronization app between OpenProject and GitHub. This app provides a solution for users who want to synchronize their project data between these two popular platforms.
@@ -67,7 +71,11 @@
 
         <h5 id="configureGithub" class="mt-2">1.2. Configuring Github</h5>
         Github configuration can be done entirely through the web user interface, but it can also be done manually if wanted. This apps controls the webhooks sent by <b>Github organizations</b>, so before configuring the app you must make sure that the Github master account have admin permissions for the organizations in which will this app work.
-        <h6 id="configuringGHuser">1.2.1. Logging in Github </h6>
+        <h6 class="mt-2" id="configuringGHuser">1.2.1. Logging in Github</h6>
+        Firstly you will need to log in Github with an account. Make sure this account has admin permissions on the organizations in which you want to use GHOPI. This account should also be assigned to the Open Project's admin account.
+        <br>
+        You may log in using the user interface in the <a href="/config-github">Github configuration</a> page using the button meant for it. <br>
+        <img src="/static/img/github-config-page-signbutton.png" style="width: 50vw;"/>
 
 
         

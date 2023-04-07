@@ -1,1 +1,7 @@
-# openproject-integration
+# GHOPI
+
+Explain: 
+* Purpose
+* How to install
+* .env
+* Dockerize

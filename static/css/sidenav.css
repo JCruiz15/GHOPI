@@ -35,6 +35,11 @@
     transition: 0.2s;
     margin-right: 5px
   }
+
+  .sidenav a.secondary-text {
+    color: lightslategray;
+    font-size: 0.9rem;
+  }
   
   /* When you mouse over the navigation links, change their color */
   .sidenav a:hover {
