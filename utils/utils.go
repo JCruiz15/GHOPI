@@ -1,3 +1,16 @@
+/*
+Utils contains all the functions which uses the logic of the API.
+
+· globalVariables.go: Defines constants and structs which are used along all the project.
+
+· utils.go: Defines functions which are general and common to all the views and functions of the API.
+
+· utilsGithub.go: Defines all the functions necessary to handle the information given by Github.
+
+· utilsOpenProject.go: Defines all the functions necessary to handle the information given by Open Project.
+
+· utils.Refresh.go: Defines the logic behind the Refresh function of the API.
+*/
 package utils
 
 import (
@@ -13,6 +26,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+/*
+Check returns true when `err != nil` and false if not.
+
+It recieves a `level` argument which can be 'info', 'warning', 'error' or 'fatal'; and depending on which one it receives it will log a message of such type. If the word inserted is misspelled it logs nothing and returns true.
+
+It also uses `msg` to log the error with the message. If `msg==""` it logs the error message by default
+*/
 func Check(err error, level string, msg string) bool {
 	if err != nil {
 		if msg == "" {
@@ -27,6 +47,7 @@ func Check(err error, level string, msg string) bool {
 			log.Error(msg)
 		case "fatal":
 			log.Fatal(msg)
+		default:
 		}
 		return true
 	} else {
@@ -169,7 +190,9 @@ func OpenProjectOptions(data []byte) {
 func CheckConnectionGithub() bool {
 
 	config, err := gabs.ParseJSONFile(Config_path)
-	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	if Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists") {
+		return false
+	}
 	token := config.Search("github-token").Data().(string)
 	user := config.Search("github-user").Data().(string)
 
@@ -215,7 +238,9 @@ func CheckConnectionGithub() bool {
 
 func CheckConnectionOpenProject() bool {
 	config, err := gabs.ParseJSONFile(Config_path)
-	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	if Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists") {
+		return false
+	}
 	token := config.Search("openproject-token").Data().(string)
 	OP_url = config.Search("openproject-url").Data().(string)
 

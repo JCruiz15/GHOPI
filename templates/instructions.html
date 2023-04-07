@@ -48,29 +48,28 @@
 {{end}}
 
 {{define "content"}}
-<div class="container-fluid px-5">
-    <div class="mb-3">
+<div class="container-fluid" style="padding-right: 7vw; padding-left: 5vw;">
+    <div class="mb-3" style="text-align: justify;">
         <h1 class="mb-1 title">User manual</h1>
         <h2 class="mb-4 subtitle">How to use GHOPI?</h2>
-        <h4>1. Getting started</h4>
-        <p>
-            Welcome to the GHOPI's configuration website, our app has been developed to create a channel of communication between Open Project and Github. This service must give project leaders and CEOs more freedom and let them focus on their work and avoid as much as possible unnecessary stops to change repository permissions, create new branches, open and close pull requests, etc.
-        </p>
-        <p>
-            In this website you will be able to configure your GHOPI app. To get more information about how to do it, read carefully the <a href="/usermanual" style="text-decoration: none;" >User Manual</a>. If you have already used our configuration webpage you can go directly to configure Open Project or Github parameters. If some information have not been pushed between apps, just use the refresh button at the top right corner to syncronize both apps.
-        </p>
-        <p>
-            Welcome to the GHOPI's configuration website, our app has been developed to create a channel of communication between Open Project and Github. This service must give project leaders and CEOs more freedom and let them focus on their work and avoid as much as possible unnecessary stops to change repository permissions, create new branches, open and close pull requests, etc.
-        </p>
-        <p>
-            In this website you will be able to configure your GHOPI app. To get more information about how to do it, read carefully the <a href="/usermanual" style="text-decoration: none;" >User Manual</a>. If you have already used our configuration webpage you can go directly to configure Open Project or Github parameters. If some information have not been pushed between apps, just use the refresh button at the top right corner to syncronize both apps.
-        </p>
-        <p>
-            Welcome to the GHOPI's configuration website, our app has been developed to create a channel of communication between Open Project and Github. This service must give project leaders and CEOs more freedom and let them focus on their work and avoid as much as possible unnecessary stops to change repository permissions, create new branches, open and close pull requests, etc.
-        </p>
-        <p>
-            In this website you will be able to configure your GHOPI app. To get more information about how to do it, read carefully the <a href="/usermanual" style="text-decoration: none;" >User Manual</a>. If you have already used our configuration webpage you can go directly to configure Open Project or Github parameters. If some information have not been pushed between apps, just use the refresh button at the top right corner to syncronize both apps.
-        </p>
+        Welcome to the user manual for GHOPI, our synchronization app between OpenProject and GitHub. This app provides a solution for users who want to synchronize their project data between these two popular platforms.
+        Using our app, you will be able to easily create a channel of communication between OpenProject and GitHub, allowing you to keep your projects up-to-date and avoid the need for manual data entry.<br>
+        This user manual will guide you through the process of configuring, and using GHOPI. We will provide step-by-step instructions, helpful tips, and screenshots to help you get the most out of the app. Whether you are a project manager, software developer, or just a freelancer who is trying to improve its work flow, our app is designed to simplify your workflow and enhance your productivity.<br>
+        Thank you for choosing GHOPI, and we hope that this user manual will be a valuable resource for you as you use our app to synchronize your project data between OpenProject and GitHub.<br class="mb-3">
+        
+        <h4 id="configuringGHOPI">1. GHOPI's configuration</h4>
+        In this manual we are not explaining how to install this app, because to read this you have to had it already installed. We will explain how to configure GHOPI so it can receive data from Github and Open Project.
+        This channel will make use of the webhooks provided by both apps, so you will need to have this app running in a <b>visible port</b> for both apps. Normally the app will be running on port 5050.
+        It must be said that this project is the first version and it may change or add features in a future, so if something you need is not supported yet be patient or contact us to add new features.
+        
+        <h5 id="configureOpenProject" class="mt-2">1.1. Configuring Open Project</h5>
+        
+
+        <h5 id="configureGithub" class="mt-2">1.2. Configuring Github</h5>
+        Github configuration can be done entirely through the web user interface, but it can also be done manually if wanted. This apps controls the webhooks sent by <b>Github organizations</b>, so before configuring the app you must make sure that the Github master account have admin permissions for the organizations in which will this app work.
+        <h6 id="configuringGHuser">1.2.1. Logging in Github </h6>
+
+
         
     </div>
 </div>

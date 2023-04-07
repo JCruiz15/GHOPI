@@ -1,3 +1,4 @@
+/*Package main implements all the logic to launch the API and the web UI*/
 package main
 
 import (
@@ -26,10 +27,15 @@ import (
 
 // TODO - Make the documentation.
 
-// TODO - Cuando se ejecute el refresh, si github o openproject esta caido mandar un fatal pero que no se caiga la app.
+// TODO - Testing
+
+// TODO - Not only check tokens in refresh, WHEN?
+
+// TODO - Add license when commiting to main
 
 // TODO - Redireccionar a index cuando la url esté mal escrita.
 
+/*Function init does somthing*/
 func init() {
 	log.SetFormatter(&easy.Formatter{
 		TimestampFormat: "02/01/2006-15:04:05",
@@ -61,7 +67,7 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	http.HandleFunc("/", index)
-	http.HandleFunc("/usermanual", instructions)
+	http.HandleFunc("/docs", instructions)
 	http.HandleFunc("/logs", logs)
 	http.HandleFunc("/config-openproject", configOP)
 	http.HandleFunc("/config-github", configGH)
@@ -87,15 +93,16 @@ func main() {
 			openproject.LoggedinHandler(w, r, nil, "")
 		})
 	http.HandleFunc("/op/save-url", saveOPurl)
-	http.HandleFunc("/-/health", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/-/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	port := 5002
+	port := 5050
 	log.Info(fmt.Sprintf("Application running on port %d", port))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
+/*Function init does somthing*/
 func renderTemplate(w http.ResponseWriter, tmpl string) {
 	t := template.Must(template.New(tmpl).ParseFiles("templates/base.html", "templates/"+tmpl+".html"))
 	t.ExecuteTemplate(w, "base", tmpl)
@@ -270,7 +277,7 @@ func githubWebhook(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func saveOPurl(w http.ResponseWriter, r *http.Request) {
+func saveOPurl(_ http.ResponseWriter, r *http.Request) {
 	type save_json struct {
 		OP_url string `json:"op_url"`
 	}
@@ -298,7 +305,6 @@ func saveOPurl(w http.ResponseWriter, r *http.Request) {
 func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		byte_body, err := io.ReadAll(r.Body)
-		// fmt.Println(string(byte_body))
 
 		if err != nil {
 			log.Fatal("Error 500. Internal Server Error. On Open Project post receiving an unexpected error has occured.")
