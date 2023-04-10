@@ -1,0 +1,119 @@
+:root {
+    --primary-dark: rgb(6, 40, 61);
+    --secondary-dark: rgb(22, 75, 97);
+    --cerulean: rgb(37, 109, 133);
+    --middle-blue: rgb(54, 145, 194);
+    --principal-blue: rgb(71, 181, 255);
+    --secondary-light: rgb(147, 214, 255);
+    --primary-light: rgb(223, 246, 255);
+
+    --title-font: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    --subtitle-font: 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont;
+    --text-font: "Calibri", sans-serif, system-ui, -apple-system, BlinkMacSystemFont;
+  }
+ 
+ /* The side navigation menu */
+ .sidenav {
+    height: 100vh; /* 100% Full-height */
+    /*width: 250px;  250px width - change this with JavaScript */
+    position: fixed; /* Stay in place */
+    left: 0;
+    z-index: auto;
+    background-color: var(--secondary-dark); /* Secondary dark */
+    overflow-x: hidden; /* Disable horizontal scroll */
+    padding-top: 60px; /* Place content 60px from the top */
+    transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
+  }
+  
+  /* The navigation menu links */
+  .sidenav a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 115%;
+    color: var(--primary-light);
+    display: flex;
+    transition: 0.2s;
+    margin-right: 5px
+  }
+
+  .sidenav a.secondary-text {
+    color: lightslategray;
+    font-size: 0.9rem;
+  }
+  
+  /* When you mouse over the navigation links, change their color */
+  .sidenav a:hover {
+    color: var(--secondary-light);
+  }
+
+  .sidenav a:active {
+    color: var(--middle-blue);
+  }
+
+  .sidenav hr {
+    border-top: solid 3px var(--middle-blue);
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  #opensidenav {
+    cursor: pointer;
+    position: fixed;
+    margin-top: 100px;
+    transition: 0.5s;
+  }
+
+  #opensidenav.close {
+    color: var(--primary-light);
+    margin-left: 250px;
+  }
+
+  #opensidenav.open {
+    color: var(--cerulean);
+    margin-left: 10px;
+    
+  }
+
+  #opensidenav:hover {
+    color: var(--middle-blue);
+  }
+
+  #back a {
+    font-size: small;
+    color: var(--middle-blue);
+  }
+
+  #back a span {
+    font-size: small;
+    transform: translateY(4px);
+  }
+
+  #back a:hover{
+    font-size: small;
+    color: var(--cerulean);
+  }
+
+  /* #opensidenav {
+    transform: translate(-190px);
+  } */
+  
+ /* Style page content - use this if you want to push the page content to the right when you open the side navigation */
+  #main {
+    transition: margin-left .5s;
+    margin-left: 300px;
+    margin-top: 100px;
+  }
+  
+  /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+  @media screen and (max-height: 450px) {
+    .sidenav {padding-top: 15px;}
+    .sidenav a {font-size: 90%;}
+  } 
+
+  @media screen and (max-width: 485px) {
+    .sidenav {padding-top:75px;}
+    #main {margin-top: 130px;}
+    #opensidenav {margin-top: 130px;}
+    .sidenav a {font-size: 100%;}
+  } 

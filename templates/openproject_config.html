@@ -1,0 +1,173 @@
+{{define "head"}}
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<link rel="stylesheet" href="static/css/style.css">
+<title>Open Project configuration</title>
+
+<style>
+    .btn-sync__text .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 1,
+        'wght' 600,
+        'GRAD' -25,
+        'opsz' 100;
+        color: rgb(223, 246, 255);
+        vertical-align: text-bottom;
+        font-size: 24px;
+      }
+</style>
+
+{{end}}
+
+{{define "navbar"}}
+<div class="topnav-right">
+    <button type="button" class="btn btn-sync me-3 btn-lg" onclick="loading()">
+        <span class="btn-sync__text">
+            Refresh 
+            <span class="material-symbols-outlined">sync</span>
+        </span>
+    </button>
+</div>
+{{end}}
+
+{{define "sidebar-top"}}
+{{end}}
+
+{{define "sidebar-bottom"}}
+{{end}}
+
+{{define "content"}}
+
+<div class="container-fluid" style="padding-right: 7vw; padding-left: 5vw;">
+    <div class="mb-3">
+        <h1 class="title">Open Project configuration</h1>
+        <p>
+        This is the Open Project configuration page of GHOPI, this tool enables you to integrate your Open Project instance with our app and automate the synchronization of your projects data. Using the text box below you may insert the URL to your Open Project instance which should be visible, being public or in the same computer. If the field remains empty the link used will be '<a style="font-family: monospace; font-size: 85%;">http://localhost:8080</a>'. With the button below you can log in in Open Project to create the link between your instance and the app. It is important to log in with the master account of Open Project so it has permissions to control tasks and projects.<br><br>
+
+        It is not possible to create the webhook from the GHOPI's interface and neither can you create the custom fields needed in Open Project, so you will have to do it manually from Open Project.<br><br>
+
+        For further information read the <a href="/docs">user manual</a> or visit our Github <a href="https://github.com/JCruiz15/GHOPI">repository</a>.
+        </p>
+        <p>
+            <label>OpenProject instance URL:</label>
+            <div class="form-group">
+                <span>http://</span>
+                <input id="op_url" name="op_url" class="form-field" type="text" placeholder="open-project-domain.com">
+                <span onclick="save()" id="save" class="button">Save</span>
+            </div>
+        </p>
+
+        <div class="d-flex justify-content-center">
+            <form action="/op/login" method="post" enctype="multipart/form-data">
+                <input class="btn-one mt-2" id="submit-login" type="submit" name="submit_op" value="Sign up with Open Project"/>
+                <p id="login-label" class="mt-2" style="text-align: center;" hidden></p>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{end}}
+
+{{define "scripts"}}
+
+<script>
+    const url = window.location.href.split(location.pathname)[0] + "/api/refresh";
+    const theButton = document.querySelector(".btn-sync");
+
+    function refresh(){
+        fetch(url).then(res => {
+            return res.text()
+        }).then(text => {
+            theButton.classList.remove("btn-sync--loading");
+            let type = "success";
+            let title = "Finished refreshing tasks";
+            if (text.startsWith("Error")) {
+                type = "error";
+                title = "Error when refreshing"
+            }
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: type
+            })
+        })
+    }
+    function loading(){
+        refresh();
+        theButton.classList.add("btn-sync--loading");
+    }
+</script>
+
+<script>
+    function containsOnly(str, set) {
+        return str.split('').every(function(ch) {
+            return set.indexOf(ch) !== -1;
+        });
+    }
+
+    function save() {
+        const url = (window.location.href).split(/[?#]/)[0] + "op/save-url";
+        let input = document.getElementById("op_url");
+        if (input.value === "") {
+            input.value = "";
+            input.placeholder = "URL cannot be blank";
+            input.style.backgroundColor = "rgba(255,0,0,0.1)";
+            
+        } else if (input.value.includes(" ")) {
+            input.value = "";
+            input.placeholder = "URL cannot contain spaces";
+            input.style.backgroundColor = "rgba(255,0,0,0.1)";
+        } else if (!containsOnly(input.value, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=")) {
+            input.value = "";
+            input.placeholder = "Invalid URL";
+            input.style.backgroundColor = "rgba(255,0,0,0.1)";
+        } else {
+            let data = {op_url: "http://"+input.value};
+            console.log(data);
+
+            fetch("/op/save-url", {
+                method: "POST",
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(data)
+            }).then(res => {
+                Swal.fire("URL saved", "", "info")
+            });
+        }
+    }
+</script>
+
+<script>
+    const url_config = window.location.href.split(location.pathname)[0] + "/api/get-config";
+    let field = document.getElementById("op_url");
+
+    async function get_config() {
+        let response = await fetch(url_config);
+        let data = await response.text();
+        return data;
+    }
+
+    async function show_url() {
+        config = await get_config();
+        config = JSON.parse(config);
+        if(config['openproject-url'] != "" && config['openproject-url'] != undefined) {
+            document.getElementById("op_url").value = config['openproject-url'].split("://")[1];
+        }
+    }
+
+    async function show_user() {
+        config = await get_config();
+        config = JSON.parse(config);
+        if(config['openproject-user'] != "" && config['openproject-user'] != undefined) {
+            let label = document.getElementById("login-label");
+            label.innerHTML = "Signed in as <b>" + config['openproject-user'] + "</b>";
+            label.hidden = false;
+            document.getElementById("submit-login").value = "Log in Open Project with another account"
+        }
+    }
+    
+    window.onload = function() {
+        show_url();
+        show_user();
+    };
+</script>
+{{end}}

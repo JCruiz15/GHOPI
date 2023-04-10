@@ -1,54 +1,175 @@
 {{define "head"}}
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-<title>User Manual</title>
+<title>GHOPI</title>
+
+<style>
+    #save .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 1,
+        'wght' 300,
+        'GRAD' -25,
+        'opsz' 48;
+        color:rgb(71, 181, 255);
+        position: absolute;
+        transition: all 0.5s;
+      }
+      #save .material-symbols-outlined:hover {
+          color: rgb(37, 109, 133);
+        }
+      #save .material-symbols-outlined:active {
+          color: rgb(22, 75, 97);
+      }
+
+      #save:hover {
+        cursor:pointer;
+      }
+    .btn-sync__text .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 1,
+        'wght' 600,
+        'GRAD' -25,
+        'opsz' 100;
+        color: rgb(223, 246, 255);
+        vertical-align: text-bottom;
+        font-size: 24px;
+      }
+</style>
 {{end}}
 
 {{define "navbar"}}
-<div class="collapse navbar-collapse" id="menuItems">
-    <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-            <a href="/instructions" class="nav-link">Instructions</a>
-        </li>
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="/" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Copy URL
-            </a>
-            <ul class="dropdown-menu bg-darkgray" aria-labelledby="navbarDropdown">
-                <li>
-                    <a class="dropdown-item text-lgray" onclick="copyOP()" role="button">
-                        <img class="me-1" src="static/img/op_logo.svg" title="open project logo" style="width: 20px;height: 20px;">
-                        Copy Open Project endpoint
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item text-lgray" onclick="copyGithub()" role="button">
-                        <img class="me-1" src="static/img/github_logo.svg" title="github logo" style="width: 20px;height: 20px;">
-                        Copy Github endpoint
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item text-lgray" onclick="copyGitlab()" role="button">
-                        <img class="me-1" src="static/img/gitlab_logo.svg" title="gitlab logo" style="width: 20px;height: 20px;">
-                        Copy Gitlab endpoint
-                    </a>
-                </li>
-            </ul>
-        </li>
-    </ul>
-</div>
-<div class="topnav-right">
-    <button type="button" class="btn btn-sync me-3 btn-lg" onclick="loading()">
-        <span class="btn-sync__text">
-            Refresh 
-            <span class="material-symbols-outlined inline-icon">sync</span>
-        </span>
-    </button>
-</div>
+
+{{end}}
+
+{{define "sidebar-top"}}
+{{end}}
+
+{{define "sidebar-bottom"}}
+<a class="secondary-text" href="#configuringGHOPI">&ensp;1. GHOPI's configuration</a>
+<a class="secondary-text" href="#configureOpenProject">&ensp;&ensp;1.1. Configuring Open Project</a>
+<a class="secondary-text" href="#configuringOPuser">&ensp;&ensp;&ensp;1.2.1. Logging in with Open Project</a>
+<a class="secondary-text" href="#configuringOPwebhook">&ensp;&ensp;&ensp;1.2.1. Open Project webhooks</a>
+<a class="secondary-text" href="#configureGithub">&ensp;&ensp;1.2. Configuring Github</a>
+<a class="secondary-text" href="#configuringGHuser">&ensp;&ensp;&ensp;1.2.1. Logging in with Github</a>
+<a class="secondary-text" href="#configuringGHwebhook">&ensp;&ensp;&ensp;1.2.2. Github webhooks</a>
+<a class="secondary-text" href="#others">&ensp;2. Useful information</a>
+
 {{end}}
 
 {{define "content"}}
+<div class="container-fluid" style="padding-right: 7vw; padding-left: 5vw;">
+    <div class="mb-3" style="text-align: justify;">
+        <h1 class="mb-1 title">User manual</h1>
+        <h2 class="mb-4 subtitle">How to use GHOPI?</h2>
+        Welcome to the user manual for GHOPI, our synchronization app between OpenProject and GitHub. This app provides a solution for users who want to synchronize their project data between these two popular platforms.
+        Using our app, you will be able to easily create a channel of communication between OpenProject and GitHub, allowing you to keep your projects up-to-date and avoid the need for manual data entry.<br>
+        This user manual will guide you through the process of configuring, and using GHOPI. We will provide step-by-step instructions, helpful tips, and screenshots to help you get the most out of the app. Whether you are a project manager, software developer, or just a freelancer who is trying to improve its work flow, our app is designed to simplify your workflow and enhance your productivity.<br>
+        Thank you for choosing GHOPI, and we hope that this user manual will be a valuable resource for you as you use our app to synchronize your project data between OpenProject and GitHub.<br class="mb-3">
+
+        <h3 id="configuringGHOPI" class="mt-2">1. GHOPI's configuration</h3>
+        In this manual we are not explaining how to install this app, because to read this you have to had it already installed. We will explain how to configure GHOPI so it can receive data from Github and Open Project.
+        This channel will make use of the webhooks provided by both apps, so you will need to have this app running in a <b>visible port</b> for both apps. Normally the app will be running on port 5050.
+        It must be said that this project is the first version and it may change or add features in a future, so if something you need is not supported yet be patient or contact us to add new features.
+        
+        <h4 id="configureOpenProject" class="mt-4">1.1. Configuring Open Project</h4>
+        Open project is a bit complex to configure due to its poor API endpoints. For Open Project you will need to log in and create a webhook to get GHOPI to work. To achieve that you will also need to insert your Open Project url in the text field of the UI or writting it manually in the config file which may be in '/.config' inside the app installation folder with the name of 'config.json' it should be added in the field: '<i>openproject-url</i>'. If there is no URL inserted, it will use '<i>http://localhost:8080</i>'' by default. 
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/openproject-config-page.png" style="width: 50vw;"/>        
+        </div>
+        
+        <h5 class="mt-2" id="configuringOPuser">1.1.1. Logging in with Open Project</h5>
+        To use this app you will need an Open Project bearer token so it has permissions to create and modify task names, messages and get information from the work packages. <br>
+        It will be necessary to log in your Open Project instance using the master account of the instance or an account which have admin permissions. You will be able to do it using the log in button in the Open Project user interface.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/openproject-config-page-signinbutton.png" style="width: 50vw;"/>        
+        </div>
+
+        If you already have an Open Project bearer token or have other methods to obtain it you can insert it manually in the config file. You will find it in '/.config' inside the app installation folder with the name 'config.json'. Within that file you can add the Open Project token filling in the field '<i>openproject-token</i>'. You may also want to add the Open Project user name which may be inserted in the field '<i>openproject-user</i>'.
+
+        <h5 class="mt-2" id="configuringOPwebhook">1.1.2. Open Project webhooks</h5>
+        It is not possible to create the webhook for Open Project using GHOPI's user interface and so, you will have to do it manually in your Open Project instance. Follow these steps to create the webhook in Open Project:
+        &emsp;1. Logged as an Open Project admin account, go to the administration section.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/OP-webhook1.png" style="width: 50vw;"/>        
+        </div>
+        &emsp;2. Select the 'API and webhooks' section from the menu.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/OP-webhook2.png" style="width: 50vw;"/>        
+        </div>
+        &emsp;3. In there, go to webhooks and push '+ Webhook' to create a new one.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/OP-webhook3.png" style="width: 50vw;"/>        
+        </div>
+        &emsp;4. Insert the app URL in the 'Payload URL' field as shown. In the events select at least updated and created projects, updated and created work packages; but you may select all of the fields. You can also select the projects in which you want GHOPI to work on or you can select all projects if you want to synchronize everything.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/OP-webhook4.png" style="width: 50vw;"/>        
+        </div>
+        &emsp;5. Finally it will show a message like the following and you may see the webhook created.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/OP-webhook5.png" style="width: 50vw;"/>        
+        </div>
+
+        You can obtain the Open Project webhook endpoint using the '<b>Copy URL</b>' button in GHOPI's navbar, and selecting Open Project API endpoint.<br>
+        Using either one method or other you will create the webhook needed to connect Open Project with GHOPI. For more information about Open Project webhooks visit the <a href="https://www.openproject.org/docs/system-admin-guide/incoming-and-outgoing/webhooks/">Open Project documentation</a>.
+
+
+        <h4 id="configureGithub" class="mt-4">1.2. Configuring Github</h4>
+        Github configuration can be done entirely through the web user interface, but it can also be done manually if wanted. This apps controls the webhooks sent by <b>Github organizations</b>, so before configuring the app you must make sure that the Github master account have admin permissions for the organizations in which will this app work.
+        <h5 class="mt-2" id="configuringGHuser">1.2.1. Logging in with Github</h5>
+        Firstly you will need to log in Github with an account. Make sure this account has admin permissions on the organizations in which you want to use GHOPI. This account should also be assigned to the Open Project's admin account. 
+        <br><br>
+        You may log in using the user interface in the <a href="/config-github">Github configuration</a> page using the button meant for it. <br>
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/github-config-page-signbutton.png" style="width: 50vw;"/>        
+        </div>
+
+        It is important to log in with Github so it can create and check pull requests, create branches and modify user permissions. If the user is not logged the app will not be able to accomplish all its tasks.<br><br>
+
+        If you already have a bearer token from Github or do have other ways to obtain it, you can create or modify the config file. You will find it in '/.config' inside the app installation folder with the name 'config.json'. Within that file you can add the Github token filling in the field '<i>github-token</i>'. You may also want to add the Github user name which may be inserted in the field '<i>github-user</i>'.
+        <h5 class="mt-2" id="configuringGHwebhook">1.2.2. Github webhooks</h5>
+        It is also necessary to use webhooks to connect both app and Github. The easiest way to create a webhook is by creating it using our web interface. Pushing the webhook button in the <a href="/config-github">Github configuration page</a>, you will be able to write down the name of the organization with which you want to create the webhook and if it is possible it will be created automatically.<br>
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/github-config-page-createwebhook.png" style="width: 50vw;"/>        
+        </div>
+
+        If this does not work or you want to do it manually just follow these steps: <br>
+        &emsp;1. Go to the settings section of your organization.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/Github-webhook1.png" style="width: 50vw;"/>        
+        </div>
+        &emsp;2. Select the webhooks configuration section.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/Github-webhook2.png" style="width: 50vw;"/>        
+        </div>
+        &emsp;3. Click on 'add webhook' to configure a new one.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/Github-webhook3.png" style="width: 50vw;"/>        
+        </div>
+        &emsp;4. Insert the URL of GHOPI's API, select json content type and select 'send me everything'. Then push Add Webhook to finish the creation.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/Github-webhook4.png" style="width: 50vw;"/>        
+        </div>
+        &emsp;5. It will show this message when the webhook is created and it will send a ping to try the webhook. If the ping returned a valid response it will show a tick next to the created webhook and you will also be able to see in the <a href="/logs">logs page</a>.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/Github-webhook5.png" style="width: 50vw;"/>        
+        </div>
+
+        You can obtain the Github webhook endpoint using the '<b>Copy URL</b>' button in GHOPI's navbar, and selecting Github API endpoint.<br>
+        Using either one method or other you will create the webhook needed to connect Github with GHOPI. For more information about Github webhooks visit the <a href="https://docs.github.com/en/webhooks-and-events/webhooks/about-webhooks">Github documentation</a>.
+
+        <h3 id="others" class="mt-4">2. Useful information</h3>
+        You can check our <a href="https://github.com/JCruiz15/GHOPI">Github repository</a> to get more information about GHOPI's installation. You can also contact us by opening an issue in the Github repository. <br>
+        This project is licensed by the GNU license, read the terms of the license <a href="https://github.com/JCruiz15/GHOPI/blob/main/LICENSE.md">here</a>.
+        
+    </div>
+</div>
 {{end}}
 
 {{define "scripts"}}
+<script>
+window.onload = function() {
+  document.getElementById("body").style.background = "rgba(243,246,255,1)";
+}
+</script>
+
 {{end}}

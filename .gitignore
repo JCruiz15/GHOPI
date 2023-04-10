@@ -1,5 +1,3 @@
 .env
-.tokens
-data.json
 outputs.log
-.config/config.json
+.config
