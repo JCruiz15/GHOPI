@@ -1,17 +1,15 @@
 # GHOPI
 
 #### Table of contents
-- [GHOPI](#ghopi)
-      - [Table of contents](#table-of-contents)
-  - [Prerequisites](#prerequisites)
-  - [Installation guide](#installation-guide)
-    - [Windows](#windows)
-    - [Linux and MacOS](#linux-and-macos)
-    - [Setting up .env file](#setting-up-env-file)
-      - [Open Project app](#open-project-app)
-      - [Github app](#github-app)
-  - [Work in progress](#work-in-progress)
-  - [License](#license)
+ - [Prerequisites](#prerequisites)
+ - [Installation guide](#installation-guide)
+   - [Windows](#windows)
+   - [Linux and MacOS](#linux-and-macos)
+   - [Setting up .env file](#setting-up-env-file)
+     - [Open Project app](#open-project-app)
+     - [Github app](#github-app)
+ - [Work in progress](#work-in-progress)
+ - [License](#license)
 
 ---
 
@@ -23,7 +21,7 @@ GHOPI is capable of creating branches in the repository for each task created on
 
 It also has a web interface which will provide an easy configuration process and also logs viewer to check every information or error happening into the app.
 
-![GHOPI's user interface, home page](./static/img/GHOPIui.png)
+![GHOPI's user interface, home page](./static/img/GHOPI_logo.svg)
 
 ## Prerequisites
 [Go](https://go.dev/) version 1.19.1 or higher.
@@ -80,3 +78,5 @@ Once the app is created new client ID and Secret client will be created. You hav
 We are working on dockerizing the app so the installation is much easier. We are still documenting all the app code so it is more readable.
 
 ## License
+
+This project is licensed under GNU v3.0 license. Read it in [LICENSE.md](https://github.com/JCruiz15/GHOPI/blob/main/LICENSE.md) file.
