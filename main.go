@@ -29,13 +29,9 @@ import (
 
 // TODO - Testing
 
-// TODO - Not only check tokens in refresh, WHEN?
+// TODO - Add license and go build when commiting to main
 
-// TODO - Add license when commiting to main
-
-// TODO - Redireccionar a index cuando la url esté mal escrita.
-
-/*Function init does somthing*/
+/*Function init sets up logs format and log file metadata. Also loads .env file.*/
 func init() {
 	log.SetFormatter(&easy.Formatter{
 		TimestampFormat: "02/01/2006-15:04:05",
@@ -368,15 +364,21 @@ func refreshProxy(w http.ResponseWriter, _ *http.Request) { // TODO - Read lastR
 	if _, err := os.Stat(utils.Config_path); err == nil {
 		config, err = gabs.ParseJSONFile(utils.Config_path)
 		utils.Check(err, "Error", "Error 500. Config file could not be read")
-		read_ls := config.Search("lastSync").Data().(string)
-
-		if string(read_ls) != "" {
-			var parseError error
-			lastRefresh, parseError = time.Parse("2006-01-02T15:04:05Z", string(read_ls))
-			utils.Check(parseError, "error", "The last synchronization date could not be parsed correctly. Check if it has the correct format, which is 'YYYY-MM-DDTHH:mm:ssZ'")
+		read_ls := config.Search("lastSync").Data()
+		if read_ls != nil {
+			read_ls := read_ls.(string)
+			if string(read_ls) != "" {
+				var parseError error
+				lastRefresh, parseError = time.Parse("2006-01-02T15:04:05Z", string(read_ls))
+				utils.Check(parseError, "error", "The last synchronization date could not be parsed correctly. Check if it has the correct format, which is 'YYYY-MM-DDTHH:mm:ssZ'")
+			} else {
+				lastRefresh = time.Date(2000, 1, 1, 0, 0, 1, 0, time.UTC) // Set lastRefresh to 2000-01-01T00:00:01.0Z
+				config.Set(lastRefresh.Format("2006-01-02T15:04:05Z"), "lastSync")
+			}
 		} else {
-			lastRefresh = time.Date(2000, 1, 1, 0, 0, 1, 0, time.UTC) // Set lastRefresh to 2000-01-01T00:00:01.0Z
-			config.Set(lastRefresh.Format("2006-01-02T15:04:05Z"), "lastSync")
+			lastRefresh = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC) // Set lastRefresh to 2000-01-01T00:00:00.0Z
+			config := gabs.New()
+			config.Set(lastRefresh.Format("2006-01-02T15:04:05Z"), "lastSync") // TODO - errcheck
 		}
 	} else {
 		lastRefresh = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC) // Set lastRefresh to 2000-01-01T00:00:00.0Z

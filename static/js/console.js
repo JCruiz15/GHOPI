@@ -27,11 +27,9 @@ async function get_console(lvl) {
         return log;
     } else if(filtered_type && filtered_date && currentLvl >= lvl) {
         return logs.innerHTML;
-    } else if(!filtered_type && filtered_date && currentLvl < lvl) {
+    } else if(!filtered_type && filtered_date) {
         filtered_date = false
         return log;
-    } else if(!filtered_type && filtered_date && currentLvl >= lvl) {
-        return logs.innerHTML;
     } else {
         return log;
     }
@@ -53,7 +51,7 @@ async function filterByType(level) {
     let lines = cmd.split("<br>");
     let resul = "";
 
-    for (i=0; i<lines.length-1; i++) {
+    for (i=1; i<lines.length-1; i++) {
         l = lines[i].match(/\[([^)]*)\]/)[1];
         switch (level) {
             case 4:

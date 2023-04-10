@@ -69,7 +69,7 @@ func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, D
 }
 
 func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	var URL string = "http://localhost:5002"
+	var URL string = "http://localhost:5050"
 	if strings.Contains(r.Host, "localhost") {
 		URL = fmt.Sprintf("http://%s", r.Host)
 	} else {
@@ -187,7 +187,7 @@ func (op *Openproject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// 	fmt.Println(gh.states)
 	// }
 
-	var URL string = "http://localhost:5002"
+	var URL string = "http://localhost:5050"
 	if strings.Contains(r.Host, "localhost") {
 		URL = fmt.Sprintf("http://%s", r.Host)
 	} else {

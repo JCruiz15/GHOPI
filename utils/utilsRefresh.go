@@ -17,8 +17,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// TODO - Change keyword:change
-
 func Refresh(lastRefresh time.Time, channel chan string) {
 
 	go CheckCustomFields()

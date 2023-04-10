@@ -43,6 +43,7 @@ func NewGithub() *Github {
 }
 
 func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data map[string]string, Token string) {
+	fmt.Println(r.URL.String())
 	if Data == nil {
 		fmt.Fprint(w, "UNAUTHORIZED") // TODO - errcheck
 		return
@@ -64,7 +65,6 @@ func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data ma
 		defer f.Close()                       // TODO - errcheck
 		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
 	}
-	// URL := fmt.Sprintf("https://%s", r.Host)
 
 	log.Info("Github log in has been successful")
 	http.Redirect(w, r, "/config-github", http.StatusMovedPermanently)
@@ -84,7 +84,6 @@ func (gh *Github) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		"https://github.com/login/oauth/authorize?client_id=%s&scope=%s&redirect_uri=%s",
 		gh.clientID,
 		"admin:org%20repo%20admin:org_hook",
-		// "http://localhost:5002/github/login/callback",
 		fmt.Sprintf("%s/github/login/callback&state=%s", URL, s),
 	)
 
@@ -157,6 +156,7 @@ func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	URL := fmt.Sprintf("https://%s", r.Host)
+	fmt.Println(URL)
 
 	AccessToken := gh.getAccessToken(code, URL)
 	Data := gh.getData(AccessToken)
