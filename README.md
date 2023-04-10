@@ -78,3 +78,5 @@ Once the app is created new client ID and Secret client will be created. You hav
 We are working on dockerizing the app so the installation is much easier. We are still documenting all the app code so it is more readable.
 
 ## License
+
+This project is licensed under GNU v3.0 license. Read it in [LICENSE.md](https://github.com/JCruiz15/GHOPI/blob/main/LICENSE.md) file.
