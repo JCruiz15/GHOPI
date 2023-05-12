@@ -47,7 +47,7 @@ Which will create an executable file to use the app. Then use your technology to
 
 ### Setting up .env file
 
-To get this app to work you firstly need to set up a .env file which must include the client id and secret id of Github and Open Project to be able to log in them. This .env file must be in the same folder as the `GHOPI.exe` app or in the project root folder.
+To get this app to work you firstly need to set up a .env file which must include the client id and secret id of Github and Open Project to be able to log in them. This .env file must be in the same folder as the `GHOPI.exe` app or in the project root folder. There is a template of the .env file at [.env.template](.env.template) you may look at.
 
 #### Open Project app
 
