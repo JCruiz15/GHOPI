@@ -174,10 +174,10 @@ func OpenProjectOptions(data []byte) {
 			b := strings.Split(b_title, "/")
 			branch := b[len(b)-1]
 
-			// openproject_task_msg(
-			// 	data,
-			// 	fmt.Sprintf("[%s] Branch was deleted. This task may be rejected", branch),
-			// )
+			openprojectPRmsg(
+				data,
+				fmt.Sprintf("[%s] Branch assigned to this task was deleted", branch),
+			)
 
 			log.Info(fmt.Sprintf("Branch [%s] has been deleted", branch))
 		}
