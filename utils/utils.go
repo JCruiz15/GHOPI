@@ -140,7 +140,6 @@ func OpenProjectOptions(data []byte) {
 	if _, ok := all["pull_request"]; ok {
 		pr_title, _ := jsonparser.GetString(data, "pull_request", "title")
 		action, _ := jsonparser.GetString(data, "action")
-		fmt.Println(action)
 		switch action {
 		case "opened":
 			// openproject_change_status(data, 7)
