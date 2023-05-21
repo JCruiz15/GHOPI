@@ -43,7 +43,6 @@ func NewGithub() *Github {
 }
 
 func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data map[string]string, Token string) {
-	fmt.Println(r.URL.String())
 	if Data == nil {
 		fmt.Fprint(w, "UNAUTHORIZED") // TODO - errcheck
 		return
@@ -156,7 +155,6 @@ func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	URL := fmt.Sprintf("https://%s", r.Host)
-	fmt.Println(URL)
 
 	AccessToken := gh.getAccessToken(code, URL)
 	Data := gh.getData(AccessToken)

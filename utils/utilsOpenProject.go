@@ -20,7 +20,6 @@ import (
 func openprojectPRmsg(data []byte, msg string) {
 	title, errTitle := jsonparser.GetString(data, "pull_request", "title")
 	Check(errTitle, "error", "Pull request title was not found on Github data")
-
 	id := searchID(title)
 
 	openprojectMsg(msg, id)
@@ -47,7 +46,11 @@ func openprojectMsg(msg string, id int) {
 
 	resp, err := http.DefaultClient.Do(req)
 	Check(err, "fatal", fmt.Sprintf("Open Project API call to send message failed (%s)", fmt.Sprintf("%s/api/v3/work_packages/%d/activities", OP_url, id)))
-	log.Info(resp.Status)
+	if resp.StatusCode != 200 {
+		log.Error("Pull request message could not be sent correctly. Check if the custom fields are correctly inserted.")
+	} else {
+		log.Info(fmt.Sprintf("Pull request message sent to package %d", id))
+	}
 }
 
 func openprojectChangeStatus(data []byte, status_id int) {
