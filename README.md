@@ -13,7 +13,7 @@
 
 ---
 
-Welcome to the GHOPI, our app aim is to create a channel of communication between Open Project and Github. This service must give project leaders and CEOs more freedom and let them focus on their work and avoid as much as possible unnecessary stops to change repository permissions, create new branches, open and close pull requests, etc. 
+Welcome to the GHOPI, our app aim is to create a channel of communication between Open Project and Github. This service must give project leaders and SCRUM masters more freedom and let them focus on their work and avoid as much as possible unnecessary stops to change repository permissions, create new branches, open and close pull requests, etc. 
 
 GHOPI makes use of the RESTful APIs of Open Project and Github to get information from them and synchronize both apps. This will be possible thanks to the webhooks provided by them which are easily configurable.
 
