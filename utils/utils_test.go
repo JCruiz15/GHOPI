@@ -40,7 +40,7 @@ func TestGetOPuri(t *testing.T) {
 func TestCheckConnectionGithub(t *testing.T) {
 	output := utils.CheckConnectionGithub()
 	if !output {
-		t.Log("CheckConnectionGithub returned a FALSE value")
+		t.Error("CheckConnectionGithub returned a FALSE value")
 	} else {
 		t.Log("CheckConnectionGithub returned a TRUE value")
 	}
@@ -49,7 +49,7 @@ func TestCheckConnectionGithub(t *testing.T) {
 func TestCheckConnectionOpenProject(t *testing.T) {
 	output := utils.CheckConnectionOpenProject()
 	if !output {
-		t.Log("CheckConnectionOpenProject returned a FALSE value")
+		t.Error("CheckConnectionOpenProject returned a FALSE value")
 	} else {
 		t.Log("CheckConnectionOpenProject returned a TRUE value")
 	}

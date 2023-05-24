@@ -112,7 +112,7 @@ func GithubOptions(data []byte) {
 
 			f, err := os.Open(Config_path)
 			Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
-			defer f.Close() // TODO - errcheck
+			defer f.Close()
 			config, _ := io.ReadAll(f)
 			token, err := jsonparser.GetString(config, "github-token")
 			Check(err, "error", "Error when getting github token check if the field exists in .config file and if it is correctly cumplimented. Try to log in again on Github")
@@ -162,7 +162,7 @@ If it receives a deleting branch POST, it will send a message into Open Project 
 */
 func OpenProjectOptions(data []byte) {
 	all := make(map[string]interface{})
-	json.Unmarshal(data, &all) // TODO - errcheck
+	json.Unmarshal(data, &all)
 
 	if _, ok := all["pull_request"]; ok {
 		pr_title, _ := jsonparser.GetString(data, "pull_request", "title")
@@ -232,8 +232,8 @@ func CheckConnectionGithub() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
@@ -259,8 +259,8 @@ func CheckConnectionGithub() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 		return false
 	}
 
@@ -288,8 +288,8 @@ func CheckConnectionOpenProject() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
@@ -314,8 +314,8 @@ func CheckConnectionOpenProject() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
@@ -328,8 +328,8 @@ func CheckConnectionOpenProject() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
@@ -345,8 +345,8 @@ func CheckConnectionOpenProject() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
@@ -357,11 +357,10 @@ func CheckConnectionOpenProject() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
 	return true
-
 }

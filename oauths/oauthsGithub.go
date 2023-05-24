@@ -44,7 +44,7 @@ func NewGithub() *Github {
 
 func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data map[string]string, Token string) {
 	if Data == nil {
-		fmt.Fprint(w, "UNAUTHORIZED") // TODO - errcheck
+		fmt.Fprint(w, "UNAUTHORIZED")
 		return
 	} else {
 		var config *gabs.Container
@@ -56,13 +56,13 @@ func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data ma
 			config = gabs.New()
 		}
 
-		config.Set(Data["login"], "github-user") // TODO - errcheck
-		config.Set(Token, "github-token")        // TODO - errcheck
+		config.Set(Data["login"], "github-user")
+		config.Set(Token, "github-token")
 
 		f, err := os.Create(utils.Config_path)
 		utils.Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 	}
 
 	log.Info("Github log in has been successful")
@@ -120,7 +120,7 @@ func (gh Github) getAccessToken(code string, URL string) string {
 	}
 
 	var finalresp AccessTokenResponse
-	json.Unmarshal(respbody, &finalresp) // TODO - errcheck
+	json.Unmarshal(respbody, &finalresp)
 	return finalresp.AccessToken
 }
 
@@ -140,7 +140,7 @@ func (gh Github) getData(accessToken string) map[string]string {
 
 	respbody, _ := io.ReadAll(resp.Body)
 	var jsonMap map[string]string
-	json.Unmarshal(respbody, &jsonMap) // TODO - errcheck
+	json.Unmarshal(respbody, &jsonMap)
 	return jsonMap
 }
 

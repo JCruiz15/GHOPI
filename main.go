@@ -25,12 +25,6 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-// TODO - Make the documentation.
-
-// TODO - Testing
-
-// TODO - Add license and go build when commiting to main
-
 /*Function init sets up logs format and log file metadata. Also loads .env file.*/
 func init() {
 	log.SetFormatter(&easy.Formatter{
@@ -139,7 +133,7 @@ func logs(w http.ResponseWriter, _ *http.Request) {
 func getLogs(w http.ResponseWriter, _ *http.Request) {
 	file, err := os.Open("outputs.log")
 	utils.Check(err, "error", "Error 500. Logs file could not be open")
-	defer file.Close() // TODO - errcheck
+	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	// optionally, resize scanner's capacity for lines over 64K, see next example
@@ -175,7 +169,7 @@ func getLogs(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	for i := len(lines) - 1; i >= 0; i-- {
-		w.Write(lines[i]) // TODO - errcheck
+		w.Write(lines[i])
 	}
 }
 
@@ -188,11 +182,11 @@ func getConfig(w http.ResponseWriter, _ *http.Request) {
 	} else {
 		config = gabs.New()
 	}
-	config.Delete("github-token")      // TODO - errcheck
-	config.Delete("openproject-token") // TODO - errcheck
+	config.Delete("github-token")
+	config.Delete("openproject-token")
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(config.EncodeJSON()) // TODO - errcheck
+	w.Write(config.EncodeJSON())
 }
 
 func githubWebhook(w http.ResponseWriter, r *http.Request) {
@@ -260,7 +254,7 @@ func githubWebhook(w http.ResponseWriter, r *http.Request) {
 			id, _ := jsonparser.GetInt(r, "id")
 			log.Info(fmt.Sprintf("Github webhook created successfully with id %d", id))
 		}
-		w.Write(r) // TODO - errcheck
+		w.Write(r)
 
 	} else {
 		output := map[string]interface{}{
@@ -268,7 +262,7 @@ func githubWebhook(w http.ResponseWriter, r *http.Request) {
 			"status":  http.StatusInternalServerError,
 		}
 		resul, _ := json.Marshal(output)
-		w.Write(resul) // TODO - errcheck
+		w.Write(resul)
 	}
 
 }
@@ -280,7 +274,7 @@ func saveOPurl(_ http.ResponseWriter, r *http.Request) {
 	b_body, err := io.ReadAll(r.Body)
 	utils.Check(err, "error", "Error 500. Internal server error. Open Project URL was not sent correctly and it could not be read")
 	var body save_json
-	json.Unmarshal(b_body, &body) // TODO - errcheck
+	json.Unmarshal(b_body, &body)
 
 	var config *gabs.Container
 
@@ -290,12 +284,12 @@ func saveOPurl(_ http.ResponseWriter, r *http.Request) {
 	} else {
 		config = gabs.New()
 	}
-	config.Set(body.OP_url, "openproject-url") // TODO - errcheck
+	config.Set(body.OP_url, "openproject-url")
 
 	f, err := os.Create(utils.Config_path)
 	utils.Check(err, "Error", "Error creating config file on its destination path ('./.config')")
-	defer f.Close()                       // TODO - errcheck
-	f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+	defer f.Close()
+	f.Write(config.BytesIndent("", "\t"))
 }
 
 func PostOpenProject(w http.ResponseWriter, r *http.Request) {
@@ -378,21 +372,21 @@ func refreshProxy(w http.ResponseWriter, _ *http.Request) { // TODO - Read lastR
 		} else {
 			lastRefresh = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC) // Set lastRefresh to 2000-01-01T00:00:00.0Z
 			config := gabs.New()
-			config.Set(lastRefresh.Format("2006-01-02T15:04:05Z"), "lastSync") // TODO - errcheck
+			config.Set(lastRefresh.Format("2006-01-02T15:04:05Z"), "lastSync")
 		}
 	} else {
 		lastRefresh = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC) // Set lastRefresh to 2000-01-01T00:00:00.0Z
 		config := gabs.New()
-		config.Set(lastRefresh.Format("2006-01-02T15:04:05Z"), "lastSync") // TODO - errcheck
+		config.Set(lastRefresh.Format("2006-01-02T15:04:05Z"), "lastSync")
 	}
 	f, err := os.Create(utils.Config_path)
 	utils.Check(err, "fatal", "Error 500. Config file could not be created on refresh")
-	defer f.Close()                       // TODO - errcheck
-	f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+	defer f.Close()
+	f.Write(config.BytesIndent("", "\t"))
 
 	c := make(chan string)
 	go utils.Refresh(lastRefresh, c)
 	result := <-c
 
-	w.Write([]byte(result)) // TODO - errcheck
+	w.Write([]byte(result))
 }

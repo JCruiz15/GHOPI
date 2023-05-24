@@ -190,7 +190,7 @@ func customFieldsWorkpackages() {
 	elements = elements[1:(len(elements) - 1)]
 
 	searchKeys := make(map[string]interface{})
-	json.Unmarshal(elements, &searchKeys) // TODO - errcheck
+	json.Unmarshal(elements, &searchKeys)
 
 	for key, value := range searchKeys {
 		if strings.HasPrefix(key, "customField") {
@@ -237,7 +237,7 @@ func customFieldsUser() {
 	body, _ := io.ReadAll(resp.Body)
 
 	searchKeys := make(map[string]interface{})
-	json.Unmarshal(body, &searchKeys) // TODO - errcheck
+	json.Unmarshal(body, &searchKeys)
 
 	for key, value := range searchKeys {
 		if strings.HasPrefix(key, "customField") {
@@ -266,10 +266,10 @@ func writeConfigCustomFields(key string, value string, path string) {
 	} else {
 		config = gabs.New()
 	}
-	config.Set(value, "customFields", path, key) // TODO - errcheck
+	config.Set(value, "customFields", path, key)
 
 	f, err := os.Create(config_path)
 	Check(err, "Error", "Config file could not be created. Check permissions of editing of the app")
-	defer f.Close()                       // TODO - errcheck
-	f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+	defer f.Close()
+	f.Write(config.BytesIndent("", "\t"))
 }

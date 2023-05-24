@@ -31,7 +31,7 @@ func githubCreateBranch(data []byte) int {
 
 	f, err := os.Open(".config/config.json")
 	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
-	defer f.Close() // TODO - errcheck
+	defer f.Close()
 	config, _ := io.ReadAll(f)
 	token, err := jsonparser.GetString(config, "github-token")
 

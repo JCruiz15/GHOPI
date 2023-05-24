@@ -127,8 +127,8 @@ func Refresh(lastRefresh time.Time, channel chan string) {
 	configLR.Set(new.Format("2006-01-02T15:04:05Z"), "lastSync")
 	file, err := os.Create(Config_path)
 	Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-	defer file.Close()                         // TODO - errcheck
-	file.Write(configLR.BytesIndent("", "\t")) // TODO - errcheck
+	defer file.Close()
+	file.Write(configLR.BytesIndent("", "\t"))
 
 	msg := fmt.Sprintf("All changes since %s have been updated", lastRefresh.Format("Mon, 2 Jan 2006 (15:04)"))
 	log.Info(msg)
