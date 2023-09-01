@@ -17,6 +17,13 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+/*
+Function Refresh is used to do the manual sychronization. 
+
+It uses the 'lastRefresh' time obtained by its proxy function in main.go to do the synchronization only in the updated work packages.
+
+It also uses a channel to inform by the console log and graphically of the status of the synchronization.
+*/
 func Refresh(lastRefresh time.Time, channel chan string) {
 
 	go CheckCustomFields()
@@ -127,14 +134,19 @@ func Refresh(lastRefresh time.Time, channel chan string) {
 	configLR.Set(new.Format("2006-01-02T15:04:05Z"), "lastSync")
 	file, err := os.Create(Config_path)
 	Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-	defer file.Close()                         // TODO - errcheck
-	file.Write(configLR.BytesIndent("", "\t")) // TODO - errcheck
+	defer file.Close()
+	file.Write(configLR.BytesIndent("", "\t"))
 
 	msg := fmt.Sprintf("All changes since %s have been updated", lastRefresh.Format("Mon, 2 Jan 2006 (15:04)"))
 	log.Info(msg)
 	channel <- msg
 }
 
+/*
+Seconday function getAllCollabs is used to obtain the collaborators of a GitHub repository
+
+It returns a map of the collaborators and an 'error' to inform of any problem. 
+*/
 func getAllCollabs(repository string, token string) ([]interface{}, error) {
 	if !strings.Contains(repository, "github") {
 		e := errors.New("repository manager not supported, only github is supported by now")
@@ -164,7 +176,9 @@ func getAllCollabs(repository string, token string) ([]interface{}, error) {
 	return output, nil
 
 }
-
+/*
+Seconday function branchExists checks if a given branch as 'subject' exists in a given GitHub repository.
+*/
 func branchExists(repository string, subject string, token string) bool {
 	r := strings.Split(repository, "/")
 	repoName := r[len(r)-1]
@@ -183,6 +197,9 @@ func branchExists(repository string, subject string, token string) bool {
 	}
 }
 
+/*
+Seconday function getGHuserFromAssigneehref obtains from Open Project work package the GitHub user of the user assigned.
+*/
 func getGHuserFromAssigneehref(assigneehref string, token string) (string, error) {
 	OP_url = GetOPuri()
 	req, err := http.NewRequest(

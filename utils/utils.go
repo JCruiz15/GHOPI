@@ -55,6 +55,13 @@ func Check(err error, level string, msg string) bool {
 	}
 }
 
+/*
+Checks the config file looking for the Open Project url.
+If the config file does not exist it returns an error.
+If it does not find the url inside the file, it returns 'http://localhost:8080' by default.
+
+Then, if it finds it, it returns the url as a string.
+*/
 func GetOPuri() string {
 	var config *gabs.Container
 	config_path := ".config/config.json"
@@ -70,6 +77,16 @@ func GetOPuri() string {
 
 // ====== From OPENPROJECT To GITHUB ======
 
+/*
+GithubOptions receives the json body of a POST from Open Project as a bytes array.
+It parses the json and calls to the Github function needed.
+
+If the case is a work package creation, it will call githubCreateBranch(data) and githubWritePermission(data), then it sends a message into the Open Project task with a link to create the Pull Request.
+
+If the case is a work package update, it check the status of the task and change the Github permissions depending on it.
+
+If the task does not have repository it will only send a message into the Open Project task telling that the task was received.
+*/
 func GithubOptions(data []byte) {
 	action, errAction := jsonparser.GetString(data, "action")
 	Check(errAction, "warning", "'Action' field was not found in Github post JSON")
@@ -95,7 +112,7 @@ func GithubOptions(data []byte) {
 
 			f, err := os.Open(Config_path)
 			Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
-			defer f.Close() // TODO - errcheck
+			defer f.Close()
 			config, _ := io.ReadAll(f)
 			token, err := jsonparser.GetString(config, "github-token")
 			Check(err, "error", "Error when getting github token check if the field exists in .config file and if it is correctly cumplimented. Try to log in again on Github")
@@ -133,14 +150,23 @@ func GithubOptions(data []byte) {
 
 // ====== From GITHUB To OPENPROJECT ======
 
+/*
+OpenProjectOptions receives the json body of a POST from Github as a bytes array.
+It parses the json and calls to the Open Project function needed.
+
+If it receives a pull request POST it will check the action of the pull request
+and will send a different message into the Open Project task reporting the state of the Pull Request.
+It will also change the task status if the Pull Request was merged into closed status (id: 12).
+
+If it receives a deleting branch POST, it will send a message into Open Project reporting the branch removal.
+*/
 func OpenProjectOptions(data []byte) {
 	all := make(map[string]interface{})
-	json.Unmarshal(data, &all) // TODO - errcheck
+	json.Unmarshal(data, &all)
 
 	if _, ok := all["pull_request"]; ok {
 		pr_title, _ := jsonparser.GetString(data, "pull_request", "title")
 		action, _ := jsonparser.GetString(data, "action")
-		fmt.Println(action)
 		switch action {
 		case "opened":
 			// openproject_change_status(data, 7)
@@ -175,18 +201,21 @@ func OpenProjectOptions(data []byte) {
 			b := strings.Split(b_title, "/")
 			branch := b[len(b)-1]
 
-			// openproject_task_msg(
-			// 	data,
-			// 	fmt.Sprintf("[%s] Branch was deleted. This task may be rejected", branch),
-			// )
-
-			log.Info(fmt.Sprintf("Branch [%s] has been deleted", branch))
+			openprojectPRmsg(
+				data,
+				fmt.Sprintf("Branch %s was deleted. This task may be rejected", branch),
+			)
 		}
 	}
 }
 
 // ====== PINGS ======
 
+/*
+Checks the status of the Github token. It will return true if it
+is valid and false if it is not. If the token is not valid it will delete Github user and
+token from the config file, so the user must log in again.
+*/
 func CheckConnectionGithub() bool {
 
 	config, err := gabs.ParseJSONFile(Config_path)
@@ -203,12 +232,13 @@ func CheckConnectionGithub() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
 
+	// Checking the ratelimit if it is smaller than 5000 the token does not have permissions and it is not valid.
 	req, err := http.NewRequest(
 		"GET",
 		fmt.Sprintf("https://api.github.com/users/%s", user),
@@ -229,13 +259,18 @@ func CheckConnectionGithub() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 		return false
 	}
 
 }
 
+/*
+Checks the status of the Open Project token. It will return true if it
+is valid and false if it is not. If the token is not valid it will delete Open Project user, token
+and url from the config file, so the user must log in again.
+*/
 func CheckConnectionOpenProject() bool {
 	config, err := gabs.ParseJSONFile(Config_path)
 	if Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists") {
@@ -253,12 +288,13 @@ func CheckConnectionOpenProject() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
 
+	// If the name returned is not anonymus the token is valid, other way is not and will return false.
 	req, _ := http.NewRequest(
 		"GET",
 		fmt.Sprintf("%s/api/v3/users/me", OP_url),
@@ -278,8 +314,8 @@ func CheckConnectionOpenProject() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
@@ -292,8 +328,8 @@ func CheckConnectionOpenProject() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
@@ -309,8 +345,8 @@ func CheckConnectionOpenProject() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
@@ -321,11 +357,10 @@ func CheckConnectionOpenProject() bool {
 
 		f, err := os.Create(Config_path)
 		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
-		defer f.Close()                       // TODO - errcheck
-		f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+		defer f.Close()
+		f.Write(config.BytesIndent("", "\t"))
 
 		return false
 	}
 	return true
-
 }
