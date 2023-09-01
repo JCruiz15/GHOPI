@@ -48,6 +48,7 @@ func init() {
 	}
 }
 
+/*Function main handles every endpoint for the app and launches it*/
 func main() {
 	var github oauths.Github = *oauths.NewGithub()
 	var openproject oauths.Openproject = *oauths.NewOpenproject()
@@ -92,12 +93,13 @@ func main() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
-/*Function init does somthing*/
+/*Function renderTemplate executes html templates to show them on the website*/
 func renderTemplate(w http.ResponseWriter, tmpl string) {
 	t := template.Must(template.New(tmpl).ParseFiles("templates/base.html", "templates/"+tmpl+".html"))
 	t.ExecuteTemplate(w, "base", tmpl)
 }
 
+/*Function index renders index.html template*/
 func index(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "index")
 	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
@@ -105,10 +107,12 @@ func index(w http.ResponseWriter, _ *http.Request) {
 	// }
 }
 
+/*Function instructions renders instructions.html template*/
 func instructions(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "instructions")
 }
 
+/*Function configOP renders openproject_config.html template*/
 func configOP(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "openproject_config")
 	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
@@ -116,6 +120,7 @@ func configOP(w http.ResponseWriter, _ *http.Request) {
 	// }
 }
 
+/*Function configGH renders github_config.html template*/
 func configGH(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "github_config")
 	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
@@ -123,6 +128,7 @@ func configGH(w http.ResponseWriter, _ *http.Request) {
 	// }
 }
 
+/*Function logs renders log.html template*/
 func logs(w http.ResponseWriter, _ *http.Request) {
 	renderTemplate(w, "log")
 	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
@@ -130,6 +136,7 @@ func logs(w http.ResponseWriter, _ *http.Request) {
 	// }
 }
 
+/*Function getLogs reads output.txt and returns its information as an html plain text*/
 func getLogs(w http.ResponseWriter, _ *http.Request) {
 	file, err := os.Open("outputs.log")
 	utils.Check(err, "error", "Error 500. Logs file could not be open")
@@ -173,6 +180,7 @@ func getLogs(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
+/*Function getConfig reads .config/config.json file and sends the information as a POST without the tokens information*/
 func getConfig(w http.ResponseWriter, _ *http.Request) {
 	var config *gabs.Container
 
@@ -189,6 +197,7 @@ func getConfig(w http.ResponseWriter, _ *http.Request) {
 	w.Write(config.EncodeJSON())
 }
 
+/*Function githubWebhook uses GitHub API to create a webhook with the organization sent*/
 func githubWebhook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var orgName string = ""
@@ -267,6 +276,7 @@ func githubWebhook(w http.ResponseWriter, r *http.Request) {
 
 }
 
+/*Function saveOPurl saves the Open Project instance URL into the config.json file using the information in the OP_url variable recieved*/
 func saveOPurl(_ http.ResponseWriter, r *http.Request) {
 	type save_json struct {
 		OP_url string `json:"op_url"`
@@ -292,6 +302,7 @@ func saveOPurl(_ http.ResponseWriter, r *http.Request) {
 	f.Write(config.BytesIndent("", "\t"))
 }
 
+/*Function PostOpenProject receives Open Project POSTs and calls requestOpenProject to control it*/
 func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		byte_body, err := io.ReadAll(r.Body)
@@ -307,6 +318,7 @@ func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/*Function requestOpenProject deals with Open Project POSTs depending on the type of POST*/
 func requestOpenProject(data []byte) {
 	action, _ := jsonparser.GetString(data, "action")
 	log.Info(fmt.Sprintf("Open Project POST received. Action: '%s' ", action))
@@ -328,6 +340,7 @@ func requestOpenProject(data []byte) {
 	}
 }
 
+/*Function PostGithub receives GitHub POSTs and calls utils.OpenProjectOptions to control it*/
 func PostGithub(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		byte_body, err := io.ReadAll(r.Body)
@@ -346,6 +359,7 @@ func PostGithub(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/*Function refreshProxy reads lastRefresh.txt before calling the utils.Refresh function and do the synchronization*/
 func refreshProxy(w http.ResponseWriter, _ *http.Request) { // TODO - Read lastRefresh in config not in lastRefresh.txt
 	var lastRefresh time.Time
 	var config *gabs.Container

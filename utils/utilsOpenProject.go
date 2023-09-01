@@ -17,6 +17,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+/*
+Function openprojectPRmsg uses data from GitHub POSTs to obtain the ID given to search for the Open Project work package related to the Pull request.
+
+It uses openprojectMsg to write the message given in 'msg' variable into the Open Project work package.
+
+It uses searchID function to obtain the ID of the work package from the Pull Request title.
+*/
 func openprojectPRmsg(data []byte, msg string) {
 	title, errTitle := jsonparser.GetString(data, "pull_request", "title")
 	Check(errTitle, "error", "Pull request title was not found on Github data")
@@ -25,6 +32,9 @@ func openprojectPRmsg(data []byte, msg string) {
 	openprojectMsg(msg, id)
 }
 
+/*
+Function openprojectMsg uses the Open Project API to write a message given into the work package with id: 'id'.
+*/
 func openprojectMsg(msg string, id int) {
 	jsonStr := []byte(fmt.Sprintf(`{"comment":{"raw":"%s"}}`, msg))
 	OP_url = GetOPuri()
@@ -53,6 +63,13 @@ func openprojectMsg(msg string, id int) {
 	}
 }
 
+/*
+Function openprojectChangeStatus uses the Open Project API to change the status of a work package depending on the 'status_id' given by the utils.OpenProjectOptions function.
+
+It uses searchID function to obtain the ID of the work package from the Pull Request title.
+
+It uses the getLockVersion to obtain the latest version of the work package.
+*/
 func openprojectChangeStatus(data []byte, status_id int) {
 
 	title, errTitle := jsonparser.GetString(data, "pull_request", "title")
@@ -93,7 +110,9 @@ func openprojectChangeStatus(data []byte, status_id int) {
 
 }
 
-// Creating function searchID to find the integer between brackets
+/*
+Function searchID looks for a number into brackets from a string given.
+*/
 func searchID(s string) int {
 	i := strings.Index(s, "[")
 	if i >= 0 {
@@ -108,6 +127,9 @@ func searchID(s string) int {
 	return -1
 }
 
+/*
+Function getLockVersion uses the Open Project API to obtain the latest version of the work package given by 'wp_id'.
+*/
 func getLockVersion(wp_id int) int {
 	OP_url = GetOPuri()
 	req, err := http.NewRequest(
@@ -134,9 +156,14 @@ func getLockVersion(wp_id int) int {
 	return int(lockV)
 }
 
+/*
+Function CheckCustomFields has the purpose of checking if the custom fields needed for the correct functioning of the app.
+
+It uses customFieldsWorkpackages and customFieldsUser functions to check the custom fields from work packages and users, respectively.
+*/
 func CheckCustomFields() {
 
-	// Se ejecuta al logearte en OP y al hacer refresh
+	// It is executed when you log into Open Project and do a syunchronization
 
 	customFieldsWorkpackages()
 	customFieldsUser()
@@ -157,6 +184,9 @@ func CheckCustomFields() {
 	}
 }
 
+/*
+Function customFieldsWorkpackages checks the existence and stores the value of 'repoField', 'sourceBranchField' and 'targetBranchField' custom fields.
+*/
 func customFieldsWorkpackages() {
 	OP_url = GetOPuri()
 	filter := url.QueryEscape(`[{"id":{"operator":"=","values":["1-1"]}}]`)
@@ -213,6 +243,9 @@ func customFieldsWorkpackages() {
 	}
 }
 
+/*
+Function customFieldsUser checks the existence and stores the value of 'githubUserField' custom field.
+*/
 func customFieldsUser() {
 	OP_url = GetOPuri()
 	url := OP_url + `/api/v3/users/schema`
@@ -256,6 +289,9 @@ func customFieldsUser() {
 	}
 }
 
+/*
+Function writeConfigCustomFields is used to store into '.config/config.json' the values of custom fields.
+*/
 func writeConfigCustomFields(key string, value string, path string) {
 	var config *gabs.Container
 	config_path := ".config/config.json"

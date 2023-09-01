@@ -15,8 +15,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// var randomS uuid.UUID
-
+/*
+Map that stores the client and secret IDs
+*/
 type Github struct {
 	*AbstractApplication
 	states   map[string]string
@@ -24,6 +25,9 @@ type Github struct {
 	secretID string
 }
 
+/*
+Function NewGithub() instantiates the GitHub application with the client and secret IDs and returns an instance of the Application interface.
+*/
 func NewGithub() *Github {
 	a := &AbstractApplication{}
 	s := make(map[string]string)
@@ -42,6 +46,9 @@ func NewGithub() *Github {
 	return r
 }
 
+/*
+Function LoggedinHandler uses the Data from the callback of GitHub and stores the GitHub user and token in 'config.json'.
+*/
 func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data map[string]string, Token string) {
 	if Data == nil {
 		fmt.Fprint(w, "UNAUTHORIZED")
@@ -69,6 +76,9 @@ func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data ma
 	http.Redirect(w, r, "/config-github", http.StatusMovedPermanently)
 }
 
+/*
+Function LoginHandler creates the URL that redirects to GitHub with the permissions needed for GHOPI.
+*/
 func (gh *Github) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var URL string
 	if strings.Contains(r.Host, "localhost") {
@@ -88,6 +98,12 @@ func (gh *Github) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, redirectURL, http.StatusMovedPermanently)
 }
+
+/*
+Function getAccessToken uses the information from the callback given by GitHub to obtain the access token.
+
+It returns the access token as a string.
+*/
 
 func (gh Github) getAccessToken(code string, URL string) string {
 	requestBodyMap := map[string]string{
@@ -124,6 +140,11 @@ func (gh Github) getAccessToken(code string, URL string) string {
 	return finalresp.AccessToken
 }
 
+/*
+Function getData uses access token to obtain information about the GitHub user that will be used in LoggedinHandler
+
+It returns the Data as a map[string]string.
+*/
 func (gh Github) getData(accessToken string) map[string]string {
 	req, err := http.NewRequest(
 		"GET",
@@ -144,6 +165,10 @@ func (gh Github) getData(accessToken string) map[string]string {
 	return jsonMap
 }
 
+/*
+Function CallbackHandler is the function that receives the information from GitHub, 
+checks the 'state' value in the URL to confirm the security of the information and calls the function LoggedI
+*/
 func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	security := r.URL.Query().Get("state")

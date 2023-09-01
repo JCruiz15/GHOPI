@@ -13,6 +13,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+/*
+githubCreateBranch uses the information from Open Project tasks to create a new branch on GitHub when needed.
+
+It recieves data from Open Project, from which it takes the desired name of the branch, the target branch name and the GitHub repository assigned. Then it calls createBranch to do the call to GitHub API.
+*/
 func githubCreateBranch(data []byte) int {
 	// Get repository
 	id, err := jsonparser.GetString(data, "work_package", "id")
@@ -42,6 +47,11 @@ func githubCreateBranch(data []byte) int {
 	return createBranch(token, repoName, GH_ORG, branchName, targetBranch)
 }
 
+/*
+createBranch uses the information gotten in githubCreateBranch to call the GitHub API and create a new branch with name 'source' and target branch 'target'.
+
+It uses the function getLastcommit to obtain the sha string from the target branch, then it calls the GitHub API to create the desired branch. 
+*/
 func createBranch(token string, repoName string, orgName string, source string, target string) int {
 	// Get Last commit
 
@@ -68,6 +78,9 @@ func createBranch(token string, repoName string, orgName string, source string, 
 	return resp.StatusCode
 }
 
+/*
+getLastCommit uses the GitHub API and returns a string with the sha code from the GitHub branch 'target'.
+*/
 func getLastcommit(token string, repoName string, GH_ORG string, target string) string {
 	req, _ := http.NewRequest(
 		"GET",
@@ -168,7 +181,13 @@ func getLastcommit(token string, repoName string, GH_ORG string, target string) 
 // 	return branch
 // }
 
+/*
+githubReadPermission receives data from an Open Project POST and obtains the information needed from it to give READ permission to the user assigned to a task.
+
+It uses the givePermission function to call the GitHub API.
+*/
 func githubReadPermission(data []byte) int {
+	/*Obtain the assigne reference from Open Project POST*/
 	assigneeRef, err := jsonparser.GetString(data, "work_package", "_links", "assignee", "href")
 	if Check(err, "error", "Assignee on Open Project information was not found") {
 		task, _ := jsonparser.GetString(data, "work_package", "subject")
@@ -176,6 +195,7 @@ func githubReadPermission(data []byte) int {
 		log.Error(fmt.Sprintf("Task %s(%d) have no assignee. Attach a new collaborator to assign new permissions.This error provoked the last one", task, id))
 		return http.StatusNotFound
 	}
+	/*Obtain the work package ID from Open Project POST*/
 	id, err := jsonparser.GetString(data, "work_package", "id")
 	Check(err, "error", "ID was not found on work package")
 	repoURL, err := jsonparser.GetString(data, "work_package", GetCustomFields().RepoField)
@@ -185,6 +205,7 @@ func githubReadPermission(data []byte) int {
 	GH_ORG := r[len(r)-2]
 	OP_url = GetOPuri()
 
+	/*Obtain the github user from the assignee information in Open Project*/
 	req, _ := http.NewRequest(
 		"GET",
 		fmt.Sprintf("%s/%s", OP_url, assigneeRef),
@@ -211,7 +232,13 @@ func githubReadPermission(data []byte) int {
 	return givePermission(GH_ORG, repo, user, READ, token)
 }
 
+/*
+githubReadPermission receives data from an Open Project POST and obtains the information needed from it to give WRITE permission to the user assigned to a task.
+
+It uses the givePermission function to call the GitHub API.
+*/
 func githubWritePermission(data []byte) int {
+	/*Obtain the assigne reference from Open Project POST*/
 	assigneeRef, err := jsonparser.GetString(data, "work_package", "_links", "assignee", "href")
 	if Check(err, "error", "") {
 		task, _ := jsonparser.GetString(data, "work_package", "subject")
@@ -219,6 +246,7 @@ func githubWritePermission(data []byte) int {
 		log.Error(fmt.Sprintf("Task %s(%d) have no assignee. Attach a new collaborator to assign new permissions.This error provoked the last one", task, id))
 		return http.StatusNotFound
 	}
+	/*Obtain the work package ID from Open Project POST*/
 	id, err := jsonparser.GetString(data, "work_package", "id")
 	Check(err, "error", "ID was not found on work package")
 	repoURL, err := jsonparser.GetString(data, "work_package", GetCustomFields().RepoField)
@@ -228,6 +256,7 @@ func githubWritePermission(data []byte) int {
 	GH_ORG := r[len(r)-2]
 	OP_url = GetOPuri()
 
+	/*Obtain the github user from the assignee information in Open Project*/
 	req, _ := http.NewRequest(
 		"GET",
 		fmt.Sprintf("%s/%s", OP_url, assigneeRef),
@@ -255,6 +284,13 @@ func githubWritePermission(data []byte) int {
 
 }
 
+/*
+givePermission is the general function that uses the GitHub API to give permission to the 'user' given as a string. 
+
+The type of permission is given by the 'permission' variable which uses the enum slope created in globalVariables.go
+
+It returns the status code of the response and logs the output.
+*/
 func givePermission(organization string, repo string, user string, slope permission, token string) int {
 	body := map[string]string{
 		"permission": string(slope),

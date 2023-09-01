@@ -15,6 +15,9 @@ import (
 	"github.com/Jeffail/gabs/v2"
 )
 
+/*
+Map that stores the client and secret IDs
+*/
 type Openproject struct {
 	*AbstractApplication
 	states   map[string]string
@@ -22,6 +25,9 @@ type Openproject struct {
 	secretID string
 }
 
+/*
+Function NewOpenproject() instantiates the Openproject application with the client and secret IDs and returns an instance of the Application interface.
+*/
 func NewOpenproject() *Openproject {
 	a := &AbstractApplication{}
 	s := make(map[string]string)
@@ -40,6 +46,9 @@ func NewOpenproject() *Openproject {
 	return r
 }
 
+/*
+Function LoggedinHandler uses the Data from the callback of Open Project and stores the Open Project user and token in 'config.json'.
+*/
 func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data map[string]string, Token string) {
 	if Data == nil {
 		fmt.Fprint(w, "UNAUTHORIZED")
@@ -68,6 +77,9 @@ func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, D
 	http.Redirect(w, r, "/config-openproject", http.StatusMovedPermanently)
 }
 
+/*
+Function LoginHandler creates the URL that redirects to Open Project with the permissions needed for GHOPI.
+*/
 func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var URL string = "http://localhost:5050"
 	if strings.Contains(r.Host, "localhost") {
@@ -92,6 +104,11 @@ func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, redirectURL, http.StatusMovedPermanently)
 }
 
+/*
+Function getAccessToken uses the information from the callback given by Open Project to obtain the access token.
+
+It returns the access token as a string.
+*/
 func (op *Openproject) getAccessToken(code string, URL string) string {
 	utils.OP_url = utils.GetOPuri()
 
@@ -137,6 +154,11 @@ func (op *Openproject) getAccessToken(code string, URL string) string {
 	return finalresp.AccessToken
 }
 
+/*
+Function getData uses access token to obtain information about the Open Project user that will be used in LoggedinHandler
+
+It returns the Data as a map[string]string.
+*/
 func (op *Openproject) getData(accessToken string) map[string]string {
 	utils.OP_url = utils.GetOPuri()
 
@@ -163,6 +185,9 @@ func (op *Openproject) getData(accessToken string) map[string]string {
 	return jsonMap
 }
 
+/*
+Function CallbackHandler is the function that receives the information from GitHub and calls the function LoggedI
+*/
 func (op *Openproject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	// security := r.URL.Query().Get("state")
