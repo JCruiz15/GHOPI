@@ -2,3 +2,4 @@
 outputs.log
 .config/config.json
 __debug_bin.exe
+.vscode

@@ -34,6 +34,7 @@
         vertical-align: text-bottom;
         font-size: 24px;
       }
+      
 </style>
 {{end}}
 
@@ -48,7 +49,8 @@
 <a class="secondary-text" href="#configuringGHOPI">&ensp;1. GHOPI's configuration</a>
 <a class="secondary-text" href="#configureOpenProject">&ensp;&ensp;1.1. Configuring Open Project</a>
 <a class="secondary-text" href="#configuringOPuser">&ensp;&ensp;&ensp;1.2.1. Logging in with Open Project</a>
-<a class="secondary-text" href="#configuringOPwebhook">&ensp;&ensp;&ensp;1.2.1. Open Project webhooks</a>
+<a class="secondary-text" href="#configuringOPwebhook">&ensp;&ensp;&ensp;1.2.2. Open Project webhooks</a>
+<a class="secondary-text" href="#configuringOPcustomfields">&ensp;&ensp;&ensp;1.2.3. Custom fields</a>
 <a class="secondary-text" href="#configureGithub">&ensp;&ensp;1.2. Configuring Github</a>
 <a class="secondary-text" href="#configuringGHuser">&ensp;&ensp;&ensp;1.2.1. Logging in with Github</a>
 <a class="secondary-text" href="#configuringGHwebhook">&ensp;&ensp;&ensp;1.2.2. Github webhooks</a>
@@ -112,6 +114,32 @@
         You can obtain the Open Project webhook endpoint using the '<b>Copy URL</b>' button in GHOPI's navbar, and selecting Open Project API endpoint.<br>
         Using either one method or other you will create the webhook needed to connect Open Project with GHOPI. For more information about Open Project webhooks visit the <a href="https://www.openproject.org/docs/system-admin-guide/incoming-and-outgoing/webhooks/">Open Project documentation</a>.
 
+        <h5 class="mt-2" id="configuringOPcustomfields">1.1.3. Custom fields</h5>
+        So the app can work properly, you will need to create some custom fields in Open Project. These fields are needed to store and share essential information between the apps such as the GitHub user or the repository associated to a task, among others.
+        The custom fields needed are:
+        <ul>
+          <li>User custom fields:
+            <ul>
+              <li>GitHub user (must contain the word 'github')</li>
+            </ul>
+          </li>
+          <li>Work packages custom fields:
+            <ul>
+              <li>Repository (must contain the word 'repo')</li>
+              <li>Branch name for the task (must contain the word 'source')</li>
+              <li>Target branch of the task (must contain the word 'target')</li>
+            </ul>
+          </li>
+        </ul>
+
+        To configure the custom fields go to the configuration page and go into custom fields. Then click on Add new custom field to create one.
+
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="/static/img/usermanual/OP-customfields.PNG" style="width: 50vw;"/>        
+        </div>
+
+        You will need to create 4 custom fields. The only one in the Users tab will be the GitHub User, which should be a compulsory field and <b>must contain the word 'github'</b> so the app can recognise it. There should also be three more custom fields in the work packages tab: Repository which <b>must contain the word 'repo'</b>, Source branch which <b>must contain the word 'source'</b> and the target branch which <b>must contain the word 'target'</b>.
+        The recommended custom fields names are: <i>Github user</i>, <i>Repository</i>, <i>Source branch</i> and <i>Target branch</i>; respectively.
 
         <h4 id="configureGithub" class="mt-4">1.2. Configuring Github</h4>
         Github configuration can be done entirely through the web user interface, but it can also be done manually if wanted. This apps controls the webhooks sent by <b>Github organizations</b>, so before configuring the app you must make sure that the Github master account have admin permissions for the organizations in which will this app work.
