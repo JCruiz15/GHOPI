@@ -17,15 +17,24 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+/*
+Function openprojectPRmsg uses data from GitHub POSTs to obtain the ID given to search for the Open Project work package related to the Pull request.
+
+It uses openprojectMsg to write the message given in 'msg' variable into the Open Project work package.
+
+It uses searchID function to obtain the ID of the work package from the Pull Request title.
+*/
 func openprojectPRmsg(data []byte, msg string) {
 	title, errTitle := jsonparser.GetString(data, "pull_request", "title")
 	Check(errTitle, "error", "Pull request title was not found on Github data")
-
 	id := searchID(title)
 
 	openprojectMsg(msg, id)
 }
 
+/*
+Function openprojectMsg uses the Open Project API to write a message given into the work package with id: 'id'.
+*/
 func openprojectMsg(msg string, id int) {
 	jsonStr := []byte(fmt.Sprintf(`{"comment":{"raw":"%s"}}`, msg))
 	OP_url = GetOPuri()
@@ -47,9 +56,20 @@ func openprojectMsg(msg string, id int) {
 
 	resp, err := http.DefaultClient.Do(req)
 	Check(err, "fatal", fmt.Sprintf("Open Project API call to send message failed (%s)", fmt.Sprintf("%s/api/v3/work_packages/%d/activities", OP_url, id)))
-	log.Info(resp.Status)
+	if resp.StatusCode != 200 {
+		log.Error("Pull request message could not be sent correctly. Check if the custom fields are correctly inserted.")
+	} else {
+		log.Info(fmt.Sprintf("Pull request message sent to package %d", id))
+	}
 }
 
+/*
+Function openprojectChangeStatus uses the Open Project API to change the status of a work package depending on the 'status_id' given by the utils.OpenProjectOptions function.
+
+It uses searchID function to obtain the ID of the work package from the Pull Request title.
+
+It uses the getLockVersion to obtain the latest version of the work package.
+*/
 func openprojectChangeStatus(data []byte, status_id int) {
 
 	title, errTitle := jsonparser.GetString(data, "pull_request", "title")
@@ -90,7 +110,9 @@ func openprojectChangeStatus(data []byte, status_id int) {
 
 }
 
-// Creating function searchID to find the integer between brackets
+/*
+Function searchID looks for a number into brackets from a string given.
+*/
 func searchID(s string) int {
 	i := strings.Index(s, "[")
 	if i >= 0 {
@@ -105,6 +127,9 @@ func searchID(s string) int {
 	return -1
 }
 
+/*
+Function getLockVersion uses the Open Project API to obtain the latest version of the work package given by 'wp_id'.
+*/
 func getLockVersion(wp_id int) int {
 	OP_url = GetOPuri()
 	req, err := http.NewRequest(
@@ -131,9 +156,14 @@ func getLockVersion(wp_id int) int {
 	return int(lockV)
 }
 
+/*
+Function CheckCustomFields has the purpose of checking if the custom fields needed for the correct functioning of the app.
+
+It uses customFieldsWorkpackages and customFieldsUser functions to check the custom fields from work packages and users, respectively.
+*/
 func CheckCustomFields() {
 
-	// Se ejecuta al logearte en OP y al hacer refresh
+	// It is executed when you log into Open Project and do a syunchronization
 
 	customFieldsWorkpackages()
 	customFieldsUser()
@@ -154,6 +184,9 @@ func CheckCustomFields() {
 	}
 }
 
+/*
+Function customFieldsWorkpackages checks the existence and stores the value of 'repoField', 'sourceBranchField' and 'targetBranchField' custom fields.
+*/
 func customFieldsWorkpackages() {
 	OP_url = GetOPuri()
 	filter := url.QueryEscape(`[{"id":{"operator":"=","values":["1-1"]}}]`)
@@ -187,7 +220,7 @@ func customFieldsWorkpackages() {
 	elements = elements[1:(len(elements) - 1)]
 
 	searchKeys := make(map[string]interface{})
-	json.Unmarshal(elements, &searchKeys) // TODO - errcheck
+	json.Unmarshal(elements, &searchKeys)
 
 	for key, value := range searchKeys {
 		if strings.HasPrefix(key, "customField") {
@@ -210,6 +243,9 @@ func customFieldsWorkpackages() {
 	}
 }
 
+/*
+Function customFieldsUser checks the existence and stores the value of 'githubUserField' custom field.
+*/
 func customFieldsUser() {
 	OP_url = GetOPuri()
 	url := OP_url + `/api/v3/users/schema`
@@ -234,7 +270,7 @@ func customFieldsUser() {
 	body, _ := io.ReadAll(resp.Body)
 
 	searchKeys := make(map[string]interface{})
-	json.Unmarshal(body, &searchKeys) // TODO - errcheck
+	json.Unmarshal(body, &searchKeys)
 
 	for key, value := range searchKeys {
 		if strings.HasPrefix(key, "customField") {
@@ -253,6 +289,9 @@ func customFieldsUser() {
 	}
 }
 
+/*
+Function writeConfigCustomFields is used to store into '.config/config.json' the values of custom fields.
+*/
 func writeConfigCustomFields(key string, value string, path string) {
 	var config *gabs.Container
 	config_path := ".config/config.json"
@@ -263,10 +302,10 @@ func writeConfigCustomFields(key string, value string, path string) {
 	} else {
 		config = gabs.New()
 	}
-	config.Set(value, "customFields", path, key) // TODO - errcheck
+	config.Set(value, "customFields", path, key)
 
 	f, err := os.Create(config_path)
 	Check(err, "Error", "Config file could not be created. Check permissions of editing of the app")
-	defer f.Close()                       // TODO - errcheck
-	f.Write(config.BytesIndent("", "\t")) // TODO - errcheck
+	defer f.Close()
+	f.Write(config.BytesIndent("", "\t"))
 }

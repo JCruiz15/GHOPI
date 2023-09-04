@@ -13,7 +13,7 @@
 
 ---
 
-Welcome to the GHOPI, our app aim is to create a channel of communication between Open Project and Github. This service must give project leaders and CEOs more freedom and let them focus on their work and avoid as much as possible unnecessary stops to change repository permissions, create new branches, open and close pull requests, etc. 
+Welcome to the GHOPI, our app aim is to create a channel of communication between Open Project and Github. This service must give project leaders and SCRUM masters more freedom and let them focus on their work and avoid as much as possible unnecessary stops to change repository permissions, create new branches, open and close pull requests, etc. 
 
 GHOPI makes use of the RESTful APIs of Open Project and Github to get information from them and synchronize both apps. This will be possible thanks to the webhooks provided by them which are easily configurable.
 
@@ -47,7 +47,7 @@ Which will create an executable file to use the app. Then use your technology to
 
 ### Setting up .env file
 
-To get this app to work you firstly need to set up a .env file which must include the client id and secret id of Github and Open Project to be able to log in them. This .env file must be in the same folder as the `GHOPI.exe` app or in the project root folder.
+To get this app to work you firstly need to set up a .env file which must include the client id and secret id of Github and Open Project to be able to log in them. This .env file must be in the same folder as the `GHOPI.exe` app or in the project root folder. There is a template of the .env file at [.env.template](.env.template) you may look at.
 
 #### Open Project app
 
