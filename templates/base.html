@@ -97,34 +97,58 @@
         function copyOP() {
             url_copy = getPathFromUrl(window.location.href)
             const url = url_copy + "api/openproject";
-            navigator.clipboard.writeText(url);
-            Swal.fire({
+            if (navigator.clipboard == undefined) {
+                Swal.fire({
+                    title: "URL could not be copied into your clipboard",
+                    text: "Either the conection is insecure or the clipboard flags are disabled.",
+                    icon: "error"
+                })
+            }else {
+                navigator.clipboard.writeText(url);
+                Swal.fire({
                     title: "URL copied to your clipboard",
                     text: url,
                     icon: "success"
                 })
+            }
         }
 
         function copyGithub() {
             url_copy = getPathFromUrl(window.location.href)
             const url = url_copy + "api/github";
-            navigator.clipboard.writeText(url);
-            Swal.fire({
+            if (navigator.clipboard == undefined) {
+                Swal.fire({
+                    title: "URL could not be copied into your clipboard",
+                    text: "Either the conection is insecure or the clipboard flags are disabled.",
+                    icon: "error"
+                })
+            }else {
+                navigator.clipboard.writeText(url);
+                Swal.fire({
                     title: "URL copied to your clipboard",
                     text: url,
                     icon: "success"
                 })
+            }
         }
 
         function copyGitlab() {
             url_copy = getPathFromUrl(window.location.href)
             const url = url_copy + "api/gitlab";
-            navigator.clipboard.writeText(url);
-            Swal.fire({
+            if (navigator.clipboard == undefined) {
+                Swal.fire({
+                    title: "URL could not be copied into your clipboard",
+                    text: "Either the conection is insecure or the clipboard flags are disabled.",
+                    icon: "error"
+                })
+            }else {
+                navigator.clipboard.writeText(url);
+                Swal.fire({
                     title: "URL copied to your clipboard",
                     text: url,
                     icon: "success"
                 })
+            }
         }
     </script>
     <script src="static/js/sidenav.js"></script>
