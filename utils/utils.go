@@ -169,26 +169,26 @@ func OpenProjectOptions(data []byte) {
 		action, _ := jsonparser.GetString(data, "action")
 		switch action {
 		case "opened":
-			// openproject_change_status(data, 7)
+			openprojectChangeStatus(data, 15) // The status ID may be changed if needed
 			openprojectPRmsg(
 				data,
 				fmt.Sprintf("[%s] Pull request was opened", pr_title),
 			)
 
 		case "synchronize":
-			openprojectChangeStatus(data, 12)
+			openprojectChangeStatus(data, 13) // The status ID may be changed if needed
 			openprojectPRmsg(
 				data,
 				fmt.Sprintf("[%s] Pull request was merged. Task has been closed", pr_title),
 			)
 		case "closed":
-			// openproject_change_status(data, 12)
+			// openprojectChangeStatus(data, 12)
 			openprojectPRmsg(
 				data,
 				fmt.Sprintf("[%s] Pull request was closed. Task may be closed too", pr_title),
 			)
 		case "reopened":
-			// openproject_change_status(data, 13)
+			// openprojectChangeStatus(data, 13)
 			openprojectPRmsg(
 				data,
 				fmt.Sprintf("[%s] Pull request was reopened. Task may be reopened too", pr_title),
