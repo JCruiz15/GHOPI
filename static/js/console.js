@@ -9,7 +9,9 @@ let filtered_type = false;
 let fileterd_date = false;
 
 async function get_logs() {
-    let response = await fetch(url);
+    let response = await fetch(url,{
+        headers: {Authentication: 'Bearer <token>'} 
+    } );
     let data = await response.text();
     return data;
 }

@@ -169,14 +169,14 @@ func OpenProjectOptions(data []byte) {
 		action, _ := jsonparser.GetString(data, "action")
 		switch action {
 		case "opened":
-			// openproject_change_status(data, 7)
+			openprojectChangeStatus(data, 15) // The status ID may be changed if needed
 			openprojectPRmsg(
 				data,
 				fmt.Sprintf("[%s] Pull request was opened", pr_title),
 			)
 
 		case "synchronize":
-			openprojectChangeStatus(data, 12)
+			openprojectChangeStatus(data, 13) // The status ID may be changed if needed
 			openprojectPRmsg(
 				data,
 				fmt.Sprintf("[%s] Pull request was merged. Task has been closed", pr_title),
@@ -207,6 +207,14 @@ func OpenProjectOptions(data []byte) {
 			)
 		}
 	}
+}
+
+func APIkeyCheck(r *http.Request) bool {
+
+	auth := r.Header.Get("Authentication")
+	fmt.Println(auth)
+
+	return false
 }
 
 // ====== PINGS ======

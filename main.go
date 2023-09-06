@@ -137,7 +137,11 @@ func logs(w http.ResponseWriter, _ *http.Request) {
 }
 
 /*Function getLogs reads output.txt and returns its information as an html plain text*/
-func getLogs(w http.ResponseWriter, _ *http.Request) {
+func getLogs(w http.ResponseWriter, r *http.Request) {
+	if !utils.APIkeyCheck(r) {
+		return
+	}
+
 	file, err := os.Open("outputs.log")
 	utils.Check(err, "error", "Error 500. Logs file could not be open")
 	defer file.Close()
