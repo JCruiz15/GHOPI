@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -88,7 +89,8 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	port := 5050
+	p, _ := os.LookupEnv("PORT")
+	port, _ := strconv.Atoi(p)
 	log.Info(fmt.Sprintf("Application running on port %d", port))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
