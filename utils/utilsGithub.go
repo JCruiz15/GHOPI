@@ -35,7 +35,7 @@ func githubCreateBranch(data []byte) int {
 	Check(err2, "warning", fmt.Sprintf("Github target branch name was not found in Open Project post. Work package id: '%s'. Check if custom fields are correct", id))
 
 	f, err := os.Open(".config/config.json")
-	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	Check(err, "error", "Error 500. Config file could not be opened when creating a GitHub branch. Config file may not exist")
 	defer f.Close()
 	config, _ := io.ReadAll(f)
 	token, err := jsonparser.GetString(config, "github-token")
@@ -50,7 +50,7 @@ func githubCreateBranch(data []byte) int {
 /*
 createBranch uses the information gotten in githubCreateBranch to call the GitHub API and create a new branch with name 'source' and target branch 'target'.
 
-It uses the function getLastcommit to obtain the sha string from the target branch, then it calls the GitHub API to create the desired branch. 
+It uses the function getLastcommit to obtain the sha string from the target branch, then it calls the GitHub API to create the desired branch.
 */
 func createBranch(token string, repoName string, orgName string, source string, target string) int {
 	// Get Last commit
@@ -213,7 +213,7 @@ func githubReadPermission(data []byte) int {
 	)
 
 	f, err := os.Open(".config/config.json")
-	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	Check(err, "error", "Error 500. Config file could not be opened when giving reading permission. Config file may not exist")
 	defer f.Close()
 	config, _ := io.ReadAll(f)
 	token, err := jsonparser.GetString(config, "github-token")
@@ -264,7 +264,7 @@ func githubWritePermission(data []byte) int {
 	)
 
 	f, err := os.Open(".config/config.json")
-	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	Check(err, "error", "Error 500. Config file could not be opened when giving writing permission. Config file may not exist")
 	defer f.Close()
 	config, _ := io.ReadAll(f)
 	token, err := jsonparser.GetString(config, "github-token")
@@ -285,7 +285,7 @@ func githubWritePermission(data []byte) int {
 }
 
 /*
-givePermission is the general function that uses the GitHub API to give permission to the 'user' given as a string. 
+givePermission is the general function that uses the GitHub API to give permission to the 'user' given as a string.
 
 The type of permission is given by the 'permission' variable which uses the enum slope created in globalVariables.go
 

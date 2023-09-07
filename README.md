@@ -1,6 +1,6 @@
 # GHOPI
 
-> Version 1.1.0
+> Version 1.2.0
 
 #### Table of contents
 - [GHOPI](#ghopi)
@@ -12,6 +12,8 @@
     - [Setting up .env file](#setting-up-env-file)
       - [Open Project app](#open-project-app)
       - [Github app](#github-app)
+      - [Port](#port)
+      - [URL paths](#url-paths)
   - [Work in progress](#work-in-progress)
   - [License](#license)
 
@@ -51,12 +53,13 @@ docker run \
     -e OPENPROJECT_SECRETID=$OPENPROJECT_SECRETID \
     -e PORT=$PORT \
     -p $PORT:$PORT \
+    -e URL_SUBPATH=$URL_SUBPATH \
     ghopi:latest
 ```
 
 This shell commands will set up and launch GHOPI free to use. Then use your chosen technology to launch the app publicly.
 
-> **NOTE**: A `deploy.sh` file is provided so the build and running of the image may be done automatically.
+> **NOTE**: A `deploy.sh` file is provided so the build and running of the image may be done automatically. Be sure to have the .env file filled up.
 
 ### Using Go 
 
@@ -98,7 +101,15 @@ Once the app is created new client ID and Secret client will be created. You hav
 
 #### Port
 
-In the .env variables it will also be necesary to indicate the port on which you will expose the app using the keyword **PORT**, as shown in [.env.template](.env.template).
+In the .env variables it will also be necesary to indicate the port on which you will expose the app using the keyword `PORT`, as shown in [.env.template](.env.template).
+
+By default the port will be `8080`.
+
+#### URL Paths
+
+In some cases you will need to deploy the APP somewhere different from the root site ("*https://your-webpage/*"). An environment variable has been created with this purpose. Using the keyword `URL_SUBPATH`, you may use the subpath needed. If you do not need a subpath and want to use the root path, give this variable an empty value or leave it by default. This shall be seen in the [.env.template](.env.template).
+
+By default the subpath is empty, so the app will use the root path.
 
 ## Work in progress
 

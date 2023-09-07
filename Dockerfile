@@ -13,6 +13,7 @@ ENV GITHUB_SECRETID=your-github-secret
 ENV OPENPROJECT_CLIENTID=your-openproject-client-id
 ENV OPENPROJECT_SECRETID=your-openproject-secret
 ENV PORT=8080
+ENV URL_SUBPATH=
 
 # copy project
 COPY . .

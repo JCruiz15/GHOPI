@@ -73,7 +73,8 @@ func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data ma
 	}
 
 	log.Info("Github log in has been successful")
-	http.Redirect(w, r, "/config-github", http.StatusMovedPermanently)
+	subpath := utils.GetSubpath()
+	http.Redirect(w, r, fmt.Sprintf("%s/config-github", subpath), http.StatusMovedPermanently)
 }
 
 /*
@@ -81,10 +82,11 @@ Function LoginHandler creates the URL that redirects to GitHub with the permissi
 */
 func (gh *Github) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var URL string
+	subpath := utils.GetSubpath()
 	if strings.Contains(r.Host, "localhost") {
-		URL = fmt.Sprintf("http://%s", r.Host)
+		URL = fmt.Sprintf("http://%s%s", r.Host, subpath)
 	} else {
-		URL = fmt.Sprintf("https://%s", r.Host)
+		URL = fmt.Sprintf("https://%s%s", r.Host, subpath)
 	}
 	s := uuid.New().String()
 	gh.states[fmt.Sprint(len(gh.states))] = s
@@ -166,7 +168,7 @@ func (gh Github) getData(accessToken string) map[string]string {
 }
 
 /*
-Function CallbackHandler is the function that receives the information from GitHub, 
+Function CallbackHandler is the function that receives the information from GitHub,
 checks the 'state' value in the URL to confirm the security of the information and calls the function LoggedI
 */
 func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
@@ -178,8 +180,8 @@ func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 			delete(gh.states, key)
 		}
 	}
-
-	URL := fmt.Sprintf("https://%s", r.Host)
+	subpath := utils.GetSubpath()
+	URL := fmt.Sprintf("https://%s%s", r.Host, subpath)
 
 	AccessToken := gh.getAccessToken(code, URL)
 	Data := gh.getData(AccessToken)

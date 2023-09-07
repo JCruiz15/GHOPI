@@ -2,7 +2,7 @@
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 <title>Logs</title>
-<link rel="stylesheet" href="static/css/logs_style.css">
+<link rel="stylesheet" href="{{.subpath}}/static/css/logs_style.css">
 
 <style>
     .btn-sync__text .material-symbols-outlined {
@@ -81,33 +81,116 @@
 {{define "scripts"}}
     <script src=" https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js "></script>
 
-    <script src="static/js/console.js"></script>
-
     <script>
-        const url_ref = window.location.href.split(location.pathname)[0] + "/api/refresh";
-        const theButton = document.querySelector(".btn-sync");
+        const url = window.location.href.split(location.pathname)[0] + "{{.subpath}}/api/get-logs";
 
-        function refresh(){
-        fetch(url_ref).then(res => {
-            return res.text()
-        }).then(text => {
-            theButton.classList.remove("btn-sync--loading");
-            let type = "success";
-            let title = "Finished refreshing tasks";
-            if (text.startsWith("Error")) {
-                type = "error";
-                title = "Error when refreshing"
+        let filterMenu = document.getElementById("filters");
+        let logs = document.getElementById("logs");
+        let startDate = document.getElementById("filterDateStart");
+        let endDate = document.getElementById("filterDateEnd");
+        let filtered_type = false;
+        let fileterd_date = false;
+
+        async function get_logs() {
+            let response = await fetch(url);
+            let data = await response.text();
+            return data;
+        }
+
+        async function show_logs() {
+            logs.innerHTML = await get_logs();
+            filterByType(4);
+            filtered_type = false;
+            filtered_date = false;
+            startDate.value = "";
+            endDate.value = "";
+        }
+        window.onload = show_logs();
+
+        async function filterByType(level) {
+            cmd = await get_logs();
+            let lines = cmd.split("<br>");
+            let resul = "";
+            for (i=1; i<lines.length; i++) {
+                if(lines[i] == undefined || lines[i] == ""){
+                    break;
+                }
+                l = lines[i].match(/\[([^)]*)\]/)[1];
+                switch (level) {
+                    case 4:
+                        if(l.includes("INFO") || l.includes("WARNING") || l.includes("ERROR") || l.includes("FATAL")) {
+                            resul = resul.concat(lines[i], "<br>");
+                        }
+                        break;
+                    case 3:
+                        if(l.includes("WARNING") || l.includes("ERROR") || l.includes("FATAL")) {
+                            resul = resul.concat(lines[i], "<br>");
+                        }
+                        break;
+                    case 2:
+                        if(l.includes("ERROR") || l.includes("FATAL")) {
+                            resul = resul.concat(lines[i], "<br>");
+                        }
+                        break;
+                    case 1:
+                        if(l.includes("FATAL")) {
+                            resul = resul.concat(lines[i], "<br>");
+                        }
+                        break;
+                }
             }
-            Swal.fire({
-                title: title,
-                text: text,
-                icon: type
-            })
-        })
-    }
-        function loading(){
-            refresh();
-            theButton.classList.add("btn-sync--loading");
+            logs.innerHTML = resul;
+            filtered_type = true;
+            if (!filtered_date && (startDate.value != "" || endDate.value != "")){
+                filterByDate()
+            }
+        }
+
+        function CheckDate() {
+            let start = new Date(startDate.value);
+            let end = new Date(endDate.value);
+            if (start > end) {
+                first = endDate.value;
+                endDate.value = startDate.value;
+                startDate.value = first;
+            }
+        }
+
+        async function filterByDate() {
+            all_logs = await get_logs();
+            let lines = all_logs.split("<br>");
+            let resul = "";
+            filtered_date = true;
+
+            let start = new Date(startDate.value);
+            if(startDate.value === '') {
+                start = new Date("1900-01-01T01:00:00");
+            }
+            let end = new Date(endDate.value);
+            if(endDate.value === '') {
+                end = new Date("2500-01-01T01:00:00");
+            }
+
+            let str1 = '<span id="date" style="color:grey; font-family: monospace;">\t'
+            let str2 = '</span>'
+
+            for (i = 0; i < lines.length; i++) {
+                date_element_index1 = lines[i].indexOf(str1);   // Gets index of span
+                if (date_element_index1 != -1) {
+                    ind1 = date_element_index1+str1.length;     // If it has de correct format it gets de date between indexes
+                    ind2 = lines[i].indexOf(str2, ind1);
+
+                    date_str = lines[i].substring(ind1 , ind2);
+                    date = moment(date_str, "DD/MM/YYYY-HH:mm:ss").toDate();
+                } else {
+                    date = new Date("");
+                }
+
+                if (date.setHours(23, 59, 59, 999) >= start && date.setHours(0, 0, 0, 0) <= end) { // It'll show dates in between the limits
+                    resul = resul.concat(lines[i], "<br>");
+                }
+            }
+            logs.innerHTML = resul;
         }
     </script>
 {{end}}

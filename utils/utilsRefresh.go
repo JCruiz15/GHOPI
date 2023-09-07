@@ -18,7 +18,7 @@ import (
 )
 
 /*
-Function Refresh is used to do the manual sychronization. 
+Function Refresh is used to do the manual sychronization.
 
 It uses the 'lastRefresh' time obtained by its proxy function in main.go to do the synchronization only in the updated work packages.
 
@@ -34,7 +34,7 @@ func Refresh(lastRefresh time.Time, channel chan string) {
 	// ====== Obtain the list of work_packages since the last refresh ======
 
 	f, err := os.Open(".config/config.json")
-	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	Check(err, "error", "Error 500. Config file could not be opened when refreshing. Config file may not exist")
 	defer f.Close()
 	config, _ := io.ReadAll(f)
 	gh_token, err := jsonparser.GetString(config, "github-token")
@@ -145,7 +145,7 @@ func Refresh(lastRefresh time.Time, channel chan string) {
 /*
 Seconday function getAllCollabs is used to obtain the collaborators of a GitHub repository
 
-It returns a map of the collaborators and an 'error' to inform of any problem. 
+It returns a map of the collaborators and an 'error' to inform of any problem.
 */
 func getAllCollabs(repository string, token string) ([]interface{}, error) {
 	if !strings.Contains(repository, "github") {
@@ -176,6 +176,7 @@ func getAllCollabs(repository string, token string) ([]interface{}, error) {
 	return output, nil
 
 }
+
 /*
 Seconday function branchExists checks if a given branch as 'subject' exists in a given GitHub repository.
 */
