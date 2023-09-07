@@ -56,3 +56,11 @@ func GetCustomFields() CustomFields {
 	return fields
 
 }
+
+func GetSubpath() string {
+	subpath, exists := os.LookupEnv("URL_SUBPATH")
+	if !exists {
+		subpath = ""
+	}
+	return subpath
+}

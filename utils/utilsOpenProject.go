@@ -46,7 +46,7 @@ func openprojectMsg(msg string, id int) {
 	Check(err, "error", "Open Project API request creation to send message failed")
 
 	f, err := os.Open(".config/config.json")
-	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	Check(err, "error", "Error 500. Config file could not be opened writing a message in Open Project. Config file may not exist")
 	defer f.Close()
 	config, _ := io.ReadAll(f)
 	token, _ := jsonparser.GetString(config, "openproject-token")
@@ -96,7 +96,7 @@ func openprojectChangeStatus(data []byte, status_id int) {
 	Check(err, "error", "Open Project API request creation to change status failed")
 
 	f, err := os.Open(".config/config.json")
-	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	Check(err, "error", "Error 500. Config file could not be opened when changing a Task status. Config file may not exist")
 	defer f.Close()
 	config, _ := io.ReadAll(f)
 	token, _ := jsonparser.GetString(config, "openproject-token")
@@ -140,7 +140,7 @@ func getLockVersion(wp_id int) int {
 	Check(err, "error", fmt.Sprintf("Open Project API request creation to get lock version of work package '%d' failed", wp_id))
 
 	f, err := os.Open(".config/config.json")
-	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	Check(err, "error", "Error 500. Config file could not be opened getting a Task Lock version. Config file may not exist")
 	config, _ := io.ReadAll(f)
 	token, _ := jsonparser.GetString(config, "openproject-token")
 
@@ -199,7 +199,7 @@ func customFieldsWorkpackages() {
 	Check(err, "error", "Open Project API request creation to get work packages custom fields failed")
 
 	f, err := os.Open(".config/config.json")
-	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	Check(err, "error", "Error 500. Config file could not be opened checking work packages custom fields. Config file may not exist")
 	defer f.Close()
 	config, _ := io.ReadAll(f)
 	token, _ := jsonparser.GetString(config, "openproject-token")
@@ -257,7 +257,7 @@ func customFieldsUser() {
 	Check(err, "error", "Open Project API request creation to get custom user fields failed")
 
 	f, err := os.Open(".config/config.json")
-	Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+	Check(err, "error", "Error 500. Config file could not be opened checking users custom fields. Config file may not exist")
 	config, _ := io.ReadAll(f)
 	token, _ := jsonparser.GetString(config, "openproject-token")
 

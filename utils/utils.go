@@ -111,7 +111,7 @@ func GithubOptions(data []byte) {
 			)
 
 			f, err := os.Open(Config_path)
-			Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+			Check(err, "error", "Error 500. Config file could not be opened when GitHub post was received. Config file may not exist")
 			defer f.Close()
 			config, _ := io.ReadAll(f)
 			token, err := jsonparser.GetString(config, "github-token")
@@ -169,26 +169,26 @@ func OpenProjectOptions(data []byte) {
 		action, _ := jsonparser.GetString(data, "action")
 		switch action {
 		case "opened":
-			// openproject_change_status(data, 7)
+			openprojectChangeStatus(data, 15) // The status ID may be changed if needed
 			openprojectPRmsg(
 				data,
 				fmt.Sprintf("[%s] Pull request was opened", pr_title),
 			)
 
 		case "synchronize":
-			openprojectChangeStatus(data, 12)
+			openprojectChangeStatus(data, 13) // The status ID may be changed if needed
 			openprojectPRmsg(
 				data,
 				fmt.Sprintf("[%s] Pull request was merged. Task has been closed", pr_title),
 			)
 		case "closed":
-			// openproject_change_status(data, 12)
+			// openprojectChangeStatus(data, 12)
 			openprojectPRmsg(
 				data,
 				fmt.Sprintf("[%s] Pull request was closed. Task may be closed too", pr_title),
 			)
 		case "reopened":
-			// openproject_change_status(data, 13)
+			// openprojectChangeStatus(data, 13)
 			openprojectPRmsg(
 				data,
 				fmt.Sprintf("[%s] Pull request was reopened. Task may be reopened too", pr_title),
@@ -219,19 +219,23 @@ token from the config file, so the user must log in again.
 func CheckConnectionGithub() bool {
 
 	config, err := gabs.ParseJSONFile(Config_path)
-	if Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists") {
+	if Check(err, "error", "Error 500. Config file could not be opened checking GitHub connection. Config file may not exist") {
 		return false
 	}
-	token := config.Search("github-token").Data().(string)
-	user := config.Search("github-user").Data().(string)
+	token := config.Search("github-token")
+	user := config.Search("github-user")
+	if token == nil || user == nil {
+		log.Warn("Error when obtaining GitHub token and user. Log in GitHub to use the app")
+		return false
+	}
 
-	if token == "" || user == "" {
-		log.Warn("Error when obtaining github token and user. Log in in github to use the app")
+	if token.Data().(string) == "" || user.Data().(string) == "" {
+		log.Warn("Error when obtaining GitHub token and user. Log in GitHub to use the app")
 		config.Set("", "github-token")
 		config.Set("", "github-user")
 
 		f, err := os.Create(Config_path)
-		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
+		Check(err, "Error", "Error 500. Config file could not be created. Config file may not exist")
 		defer f.Close()
 		f.Write(config.BytesIndent("", "\t"))
 
@@ -244,7 +248,9 @@ func CheckConnectionGithub() bool {
 		fmt.Sprintf("https://api.github.com/users/%s", user),
 		nil,
 	)
-	Check(err, "error", "")
+	if Check(err, "error", "") {
+		return false
+	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 
@@ -273,14 +279,18 @@ and url from the config file, so the user must log in again.
 */
 func CheckConnectionOpenProject() bool {
 	config, err := gabs.ParseJSONFile(Config_path)
-	if Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists") {
+	if Check(err, "error", "Error 500. Config file could not be opened checking Open Project connection. Config file may not exist") {
 		return false
 	}
-	token := config.Search("openproject-token").Data().(string)
-	OP_url = config.Search("openproject-url").Data().(string)
+	token := config.Search("openproject-token")
+	OP_url := config.Search("openproject-url")
+	if token == nil || OP_url == nil {
+		log.Warn("Error when obtaining Open Project token and url. Log in Open Project to use the app")
+		return false
+	}
 
-	if token == "" || OP_url == "" {
-		log.Warn("Error when obtaining Open Project token and url. Log in in Open Project to use the app")
+	if token.Data().(string) == "" || OP_url.Data().(string) == "" {
+		log.Warn("Error when obtaining Open Project token and url. Log in Open Project to use the app")
 
 		config.Set("", "openproject-token")
 		config.Set("", "openproject-user")

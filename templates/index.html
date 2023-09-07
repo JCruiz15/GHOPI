@@ -65,42 +65,12 @@
             In this website you will be able to configure your GHOPI app. To get more information about how to do it, read carefully the <a href="/usermanual" style="text-decoration: none;" >User Manual</a>. If you have already used our configuration webpage you can go directly to configure Open Project or Github parameters. If some information have not been pushed between apps, just use the refresh button at the top right corner to syncronize both apps.
         </p>
         <div class="d-flex justify-content-center">
-            <button class="btn-one my-3 mx-4" type="button" name="locationOP" onclick="location.href = '/config-openproject'">Go to Open Project configuration</button>
-            <button class="btn-one my-3 mx-4" type="button" name="locationOP" onclick="location.href = '/config-github'">Go to Github configuration</button>
+            <button class="btn-one my-3 mx-4" type="button" name="locationOP" onclick="location.href = '{{.subpath}}/config-openproject'">Go to Open Project configuration</button>
+            <button class="btn-one my-3 mx-4" type="button" name="locationOP" onclick="location.href = '{{.subpath}}/config-github'">Go to Github configuration</button>
         </div>
         <div style="text-align: center;">
-            <img src="/static/img/GHOPI_logo.svg" alt="Image of OP and Github comunicating" width="260" height="260">
+            <img src="{{.subpath}}/static/img/GHOPI_logo.svg" alt="Image of OP and Github comunicating" width="260" height="260">
         </div>
     </div>
 </div>
-{{end}}
-
-{{define "scripts"}}
-<script>
-    const url = (window.location.href).split(/[?#]/)[0] + "api/refresh";
-    const theButton = document.querySelector(".btn-sync");
-
-    function refresh(){
-        fetch(url).then(res => {
-            return res.text()
-        }).then(text => {
-            theButton.classList.remove("btn-sync--loading");
-            let type = "success";
-            let title = "Finished refreshing tasks";
-            if (text.startsWith("Error")) {
-                type = "error";
-                title = "Error when refreshing"
-            }
-            Swal.fire({
-                title: title,
-                text: text,
-                icon: type
-            })
-        })
-    }
-    function loading(){
-        refresh();
-        theButton.classList.add("btn-sync--loading");
-    }
-</script>
 {{end}}
