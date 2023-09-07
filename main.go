@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -44,7 +45,14 @@ func init() {
 	))
 
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("No .env file found")
+		environment := os.Environ()
+		for _, variable_tuple := range environment {
+			keyval := strings.Split(variable_tuple, "=")
+			_, ok := os.LookupEnv(keyval[0])
+			if !ok {
+				log.Fatal("Environment variables are missing. Fill up a .env file or check your docker environment variables")
+			}
+		}
 	}
 }
 
@@ -52,56 +60,65 @@ func init() {
 func main() {
 	var github oauths.Github = *oauths.NewGithub()
 	var openproject oauths.Openproject = *oauths.NewOpenproject()
+	subpath := utils.GetSubpath()
 
 	fileServer := http.FileServer(http.Dir("./static"))
 
-	http.Handle("/static/", http.StripPrefix("/static", fileServer))
+	http.Handle(fmt.Sprintf("%s/static/", subpath), http.StripPrefix(fmt.Sprintf("%s/static", subpath), fileServer))
 
-	http.HandleFunc("/", index)
-	http.HandleFunc("/docs", instructions)
-	http.HandleFunc("/logs", logs)
-	http.HandleFunc("/config-openproject", configOP)
-	http.HandleFunc("/config-github", configGH)
+	http.HandleFunc(fmt.Sprintf("%s/", subpath), index)
+	http.HandleFunc(fmt.Sprintf("%s/docs", subpath), instructions)
+	http.HandleFunc(fmt.Sprintf("%s/logs", subpath), logs)
+	http.HandleFunc(fmt.Sprintf("%s/config-openproject", subpath), configOP)
+	http.HandleFunc(fmt.Sprintf("%s/config-github", subpath), configGH)
 
-	http.HandleFunc("/api/get-logs", getLogs)
-	http.HandleFunc("/api/get-config", getConfig)
-	http.HandleFunc("/api/openproject", PostOpenProject)
-	http.HandleFunc("/api/github", PostGithub)
-	http.HandleFunc("/api/refresh", refreshProxy)
+	http.HandleFunc(fmt.Sprintf("%s/api/get-logs", subpath), getLogs)
+	http.HandleFunc(fmt.Sprintf("%s/api/get-config", subpath), getConfig)
+	http.HandleFunc(fmt.Sprintf("%s/api/openproject", subpath), PostOpenProject)
+	http.HandleFunc(fmt.Sprintf("%s/api/github", subpath), PostGithub)
+	http.HandleFunc(fmt.Sprintf("%s/api/refresh", subpath), refreshProxy)
 
-	http.HandleFunc("/github/login", github.LoginHandler)
-	http.HandleFunc("/github/login/callback", github.CallbackHandler)
-	http.HandleFunc("/github/loggedin",
+	http.HandleFunc(fmt.Sprintf("%s/github/login", subpath), github.LoginHandler)
+	http.HandleFunc(fmt.Sprintf("%s/github/login/callback", subpath), github.CallbackHandler)
+	http.HandleFunc(fmt.Sprintf("%s/github/loggedin", subpath),
 		func(w http.ResponseWriter, r *http.Request) {
 			github.LoggedinHandler(w, r, nil, "")
 		})
-	http.HandleFunc("/github/webhook", githubWebhook)
+	http.HandleFunc(fmt.Sprintf("%s/github/webhook", subpath), githubWebhook)
 
-	http.HandleFunc("/op/login", openproject.LoginHandler)
-	http.HandleFunc("/op/login/callback", openproject.CallbackHandler)
-	http.HandleFunc("/op/loggedin",
+	http.HandleFunc(fmt.Sprintf("%s/op/login", subpath), openproject.LoginHandler)
+	http.HandleFunc(fmt.Sprintf("%s/op/login/callback", subpath), openproject.CallbackHandler)
+	http.HandleFunc(fmt.Sprintf("%s/op/loggedin", subpath),
 		func(w http.ResponseWriter, r *http.Request) {
 			openproject.LoggedinHandler(w, r, nil, "")
 		})
-	http.HandleFunc("/op/save-url", saveOPurl)
-	http.HandleFunc("/-/health", func(w http.ResponseWriter, _ *http.Request) {
+	http.HandleFunc(fmt.Sprintf("%s/op/save-url", subpath), saveOPurl)
+	http.HandleFunc(fmt.Sprintf("%s/-/health", subpath), func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	port := 5050
+	p, exist := os.LookupEnv("PORT")
+	if !exist {
+		p = "8080"
+	}
+	port, _ := strconv.Atoi(p)
 	log.Info(fmt.Sprintf("Application running on port %d", port))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
 /*Function renderTemplate executes html templates to show them on the website*/
-func renderTemplate(w http.ResponseWriter, tmpl string) {
+func renderTemplate(w http.ResponseWriter, tmpl string, data map[string]interface{}) {
 	t := template.Must(template.New(tmpl).ParseFiles("templates/base.html", "templates/"+tmpl+".html"))
-	t.ExecuteTemplate(w, "base", tmpl)
+	t.ExecuteTemplate(w, "base", data)
 }
 
 /*Function index renders index.html template*/
 func index(w http.ResponseWriter, _ *http.Request) {
-	renderTemplate(w, "index")
+	subpath := utils.GetSubpath()
+	data := map[string]interface{}{
+		"subpath": subpath,
+	}
+	renderTemplate(w, "index", data)
 	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
 	// 	log.Warn("Github or Open Project token is not working or it has expired. Log in sign in to use the app.")
 	// }
@@ -109,12 +126,20 @@ func index(w http.ResponseWriter, _ *http.Request) {
 
 /*Function instructions renders instructions.html template*/
 func instructions(w http.ResponseWriter, _ *http.Request) {
-	renderTemplate(w, "instructions")
+	subpath := utils.GetSubpath()
+	data := map[string]interface{}{
+		"subpath": subpath,
+	}
+	renderTemplate(w, "instructions", data)
 }
 
 /*Function configOP renders openproject_config.html template*/
 func configOP(w http.ResponseWriter, _ *http.Request) {
-	renderTemplate(w, "openproject_config")
+	subpath := utils.GetSubpath()
+	data := map[string]interface{}{
+		"subpath": subpath,
+	}
+	renderTemplate(w, "openproject_config", data)
 	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
 	// 	log.Warn("Github or Open Project token is not working or it has expired. Log in sign in to use the app.")
 	// }
@@ -122,7 +147,11 @@ func configOP(w http.ResponseWriter, _ *http.Request) {
 
 /*Function configGH renders github_config.html template*/
 func configGH(w http.ResponseWriter, _ *http.Request) {
-	renderTemplate(w, "github_config")
+	subpath := utils.GetSubpath()
+	data := map[string]interface{}{
+		"subpath": subpath,
+	}
+	renderTemplate(w, "github_config", data)
 	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
 	// 	log.Warn("Github or Open Project token is not working or it has expired. Log in sign in to use the app.")
 	// }
@@ -130,7 +159,11 @@ func configGH(w http.ResponseWriter, _ *http.Request) {
 
 /*Function logs renders log.html template*/
 func logs(w http.ResponseWriter, _ *http.Request) {
-	renderTemplate(w, "log")
+	subpath := utils.GetSubpath()
+	data := map[string]interface{}{
+		"subpath": subpath,
+	}
+	renderTemplate(w, "log", data)
 	// if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
 	// 	log.Warn("Github or Open Project token is not working or it has expired. Log in sign in to use the app.")
 	// }
@@ -249,7 +282,7 @@ func githubWebhook(w http.ResponseWriter, r *http.Request) {
 		req.Header.Set("Accept", "application/vnd.github+json")
 
 		f, err := os.Open(".config/config.json")
-		utils.Check(err, "error", "Error 500. Config file could not be opened. Config file may not exists")
+		utils.Check(err, "error", "Error 500. Config file could not be opened. Config file may not exist")
 		config, _ := io.ReadAll(f)
 		token, _ := jsonparser.GetString(config, "github-token")
 		req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
@@ -364,7 +397,7 @@ func PostGithub(w http.ResponseWriter, r *http.Request) {
 }
 
 /*Function refreshProxy reads lastRefresh.txt before calling the utils.Refresh function and do the synchronization*/
-func refreshProxy(w http.ResponseWriter, _ *http.Request) { // TODO - Read lastRefresh in config not in lastRefresh.txt
+func refreshProxy(w http.ResponseWriter, _ *http.Request) {
 	var lastRefresh time.Time
 	var config *gabs.Container
 

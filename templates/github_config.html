@@ -1,7 +1,7 @@
 {{define "head"}}
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-<link rel="stylesheet" href="static/css/style.css">
+<link rel="stylesheet" href="{{.subpath}}/static/css/style.css">
 <title>Github configuration</title>
 
 <style>
@@ -44,11 +44,11 @@
         <p style="text-align: justify;">
         This is the GitHub configuration page of GHOPI, this tool enables you to integrate your GitHub organizations with our app and automate the synchronization of your project data. By logging in to your GitHub account through our app, you can easily create a webhook with a GitHub organization, which allows our app to receive real-time notifications about any changes made to your repositories. With this webhook, you can set up automatic synchronization between your OpenProject tasks and GitHub issues, so that any updates made in either platform will be reflected in the other. This saves you time and eliminates the need for manual data entry, ensuring that your project data is always up-to-date and accurate.<br><br>
 
-        In the GitHub configuration page, you will be able to log in with your github account and create as many webhooks as you need for your organizations. For further information read the <a href="/docs">user manual</a> or visit our Github <a href="https://github.com/JCruiz15/GHOPI">repository</a>.
+        In the GitHub configuration page, you will be able to log in with your github account and create as many webhooks as you need for your organizations. For further information read the <a href="{{.subpath}}/docs">user manual</a> or visit our Github <a href="https://github.com/JCruiz15/GHOPI">repository</a>.
         </p>
 
         <div class="d-flex justify-content-center">
-            <form action="/github/login" method="post" enctype="multipart/form-data">
+            <form action="{{.subpath}}/github/login" method="post" enctype="multipart/form-data">
                 <input class="btn-one mt-2" id="submit-login" type="submit" name="submit_gh" value="Sign up with github"/>
                 <p id="login-label" class="mt-2" style="text-align: center;" hidden></p>
             </form>
@@ -62,34 +62,6 @@
 {{end}}
 
 {{define "scripts"}}
-
-<script>
-    const url = window.location.href.split(location.pathname)[0] + "/api/refresh";
-    const theButton = document.querySelector(".btn-sync");
-
-    function refresh(){
-        fetch(url).then(res => {
-            return res.text()
-        }).then(text => {
-            theButton.classList.remove("btn-sync--loading");
-            let type = "success";
-            let title = "Finished refreshing tasks";
-            if (text.startsWith("Error")) {
-                type = "error";
-                title = "Error when refreshing"
-            }
-            Swal.fire({
-                title: title,
-                text: text,
-                icon: type
-            })
-        })
-    }
-    function loading(){
-        refresh();
-        theButton.classList.add("btn-sync--loading");
-    }
-</script>
 
 <script>
     async function gh_webhook() {
@@ -114,7 +86,7 @@
 
             function postWebhook(data) {
                 return new Promise(function (resolve, reject){
-                    fetch('/github/webhook', {
+                    fetch('{{.subpath}}/github/webhook', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -143,7 +115,7 @@
 </script>
 
 <script>
-    const url_config = window.location.href.split(location.pathname)[0] + "/api/get-config";
+    const url_config = window.location.href.split(location.pathname)[0] + "{{.subpath}}/api/get-config";
 
     async function get_config() {
         let response = await fetch(url_config);

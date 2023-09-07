@@ -1,15 +1,21 @@
 # GHOPI
 
+> Version 1.2.0
+
 #### Table of contents
- - [Prerequisites](#prerequisites)
- - [Installation guide](#installation-guide)
-   - [Windows](#windows)
-   - [Linux and MacOS](#linux-and-macos)
-   - [Setting up .env file](#setting-up-env-file)
-     - [Open Project app](#open-project-app)
-     - [Github app](#github-app)
- - [Work in progress](#work-in-progress)
- - [License](#license)
+- [GHOPI](#ghopi)
+      - [Table of contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Set up](#set-up)
+    - [Using Docker](#using-docker)
+    - [Using Go](#using-go)
+    - [Setting up .env file](#setting-up-env-file)
+      - [Open Project app](#open-project-app)
+      - [Github app](#github-app)
+      - [Port](#port)
+      - [URL paths](#url-paths)
+  - [Work in progress](#work-in-progress)
+  - [License](#license)
 
 ---
 
@@ -25,25 +31,45 @@ It also has a web interface which will provide an easy configuration process and
 
 ## Prerequisites
 [Go](https://go.dev/) version 1.19.1 or higher.
+[Docker](https://www.docker.com/) version 24.0.5 or higher.
 Any technology capable of make your app instance public.
 
-## Installation guide
+## Set up
 
-### Windows
+### Using Docker
 
-To install this app in Windows just download the executable file `GHOPI.exe` and fill the .env file as explained below.
+As the GHOPI image is not public yet, you will need to build and run the image manually. 
 
-Then use your technology to launch the app publicly.
+Firstly, clone this repository into your computer using git. Then create a `.env` file in GHOPI's path as explained in section [Setting up .env file](#setting-up-.env-file). Finally, use a terminal to execute the following commands and run the image on GHOPI. Be aware of changing the path to your own GHOPI's path.
 
-### Linux and MacOS
-
-To install this app in Unix computers, clone this repository into your computer and execute the command:
- 
 ```shell
-go build main.go
+cd </your/ghopi/path> 
+source .env
+docker build -t ghopi:latest .
+docker run \
+    -e GITHUB_CLIENTID=$GITHUB_CLIENTID \
+    -e GITHUB_SECRETID=$GITHUB_SECRETID \
+    -e OPENPROJECT_CLIENTID=$OPENPROJECT_CLIENTID \
+    -e OPENPROJECT_SECRETID=$OPENPROJECT_SECRETID \
+    -e PORT=$PORT \
+    -p $PORT:$PORT \
+    -e URL_SUBPATH=$URL_SUBPATH \
+    ghopi:latest
 ```
 
-Which will create an executable file to use the app. Then use your technology to launch the app publicly.
+This shell commands will set up and launch GHOPI free to use. Then use your chosen technology to launch the app publicly.
+
+> **NOTE**: A `deploy.sh` file is provided so the build and running of the image may be done automatically. Be sure to have the .env file filled up.
+
+### Using Go 
+
+Firstly, clone this repository into your computer using git. Then create a `.env` file as explained in section [Setting up .env file](#setting-up-.env-file). Finally execute the command:
+ 
+```shell
+go build -o GHOPI.exe main.go
+```
+
+Which will create an executable file, named GHOPI, to use the app. Then use your chosen technology to launch the app publicly.
 
 ### Setting up .env file
 
@@ -73,9 +99,21 @@ Once the app is created new client ID and Secret client will be created. You hav
 
 ![Github oauth set up credentials](./static/img/GH_appsetup_result.png)
 
+#### Port
+
+In the .env variables it will also be necesary to indicate the port on which you will expose the app using the keyword `PORT`, as shown in [.env.template](.env.template).
+
+By default the port will be `8080`.
+
+#### URL Paths
+
+In some cases you will need to deploy the APP somewhere different from the root site ("*https://your-webpage/*"). An environment variable has been created with this purpose. Using the keyword `URL_SUBPATH`, you may use the subpath needed. If you do not need a subpath and want to use the root path, give this variable an empty value or leave it by default. This shall be seen in the [.env.template](.env.template).
+
+By default the subpath is empty, so the app will use the root path.
+
 ## Work in progress
 
-We are working on dockerizing the app so the installation is much easier. We are still documenting all the app code so it is more readable.
+We are working on giving some API function the need of an API key, so the app is much more secure when running publicly.
 
 ## License
 

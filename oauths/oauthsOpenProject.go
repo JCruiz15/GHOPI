@@ -73,19 +73,20 @@ func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, D
 	}
 
 	go utils.CheckCustomFields()
-
-	http.Redirect(w, r, "/config-openproject", http.StatusMovedPermanently)
+	subpath := utils.GetSubpath()
+	http.Redirect(w, r, fmt.Sprintf("%s/config-openproject", subpath), http.StatusMovedPermanently)
 }
 
 /*
 Function LoginHandler creates the URL that redirects to Open Project with the permissions needed for GHOPI.
 */
 func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	var URL string = "http://localhost:5050"
+	var URL string = "http://localhost:8089"
+	subpath := utils.GetSubpath()
 	if strings.Contains(r.Host, "localhost") {
-		URL = fmt.Sprintf("http://%s", r.Host)
+		URL = fmt.Sprintf("http://%s%s", r.Host, subpath)
 	} else {
-		URL = fmt.Sprintf("https://%s", r.Host)
+		URL = fmt.Sprintf("https://%s%s", r.Host, subpath)
 	}
 	// s := uuid.New().String()
 	// op.states[fmt.Sprint(len(op.states))] = s
@@ -212,11 +213,12 @@ func (op *Openproject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// 	fmt.Println(gh.states)
 	// }
 
-	var URL string = "http://localhost:5050"
+	var URL string = "http://localhost:8089"
+	subpath := utils.GetSubpath()
 	if strings.Contains(r.Host, "localhost") {
-		URL = fmt.Sprintf("http://%s", r.Host)
+		URL = fmt.Sprintf("http://%s%s", r.Host, subpath)
 	} else {
-		URL = fmt.Sprintf("https://%s", r.Host)
+		URL = fmt.Sprintf("https://%s%s", r.Host, subpath)
 	}
 
 	AccessToken := op.getAccessToken(code, URL)
