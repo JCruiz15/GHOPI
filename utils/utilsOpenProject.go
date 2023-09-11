@@ -161,7 +161,7 @@ Function CheckCustomFields has the purpose of checking if the custom fields need
 
 It uses customFieldsWorkpackages and customFieldsUser functions to check the custom fields from work packages and users, respectively.
 */
-func CheckCustomFields() {
+func CheckCustomFields(channel ...chan []string) {
 
 	// It is executed when you log into Open Project and do a syunchronization
 
@@ -173,14 +173,32 @@ func CheckCustomFields() {
 	config, err := gabs.ParseJSONFile(config_path)
 	Check(err, "Error", "Error 500. Config file could not be read")
 
-	if !config.Exists("customFields", "users", "githubUserField") {
-		log.Error("Github user custom field is not created or could not be found. Its name must contain 'github' to be found correctly.")
-	} else if !config.Exists("customFields", "work_packages", "repoField") {
-		log.Error("Repository custom field is not created or could not be found. Its name must contain 'repo' to be found correctly.")
-	} else if !config.Exists("customFields", "work_packages", "sourceBranchField") {
-		log.Error("Source branch custom field is not created or could not be found. Its name must contain 'source' to be found correctly.")
-	} else if !config.Exists("customFields", "work_packages", "targetBranchField") {
-		log.Error("Target branch custom field is not created or could not be found. Its name must contain 'target' to be found correctly.")
+	if len(channel) < 1 {
+		if !config.Exists("customFields", "users", "githubUserField") {
+			log.Error("Github user custom field is not created or could not be found. Its name must contain 'github' to be found correctly.")
+		} else if !config.Exists("customFields", "work_packages", "repoField") {
+			log.Error("Repository custom field is not created or could not be found. Its name must contain 'repo' to be found correctly.")
+		} else if !config.Exists("customFields", "work_packages", "sourceBranchField") {
+			log.Error("Source branch custom field is not created or could not be found. Its name must contain 'source' to be found correctly.")
+		} else if !config.Exists("customFields", "work_packages", "targetBranchField") {
+			log.Error("Target branch custom field is not created or could not be found. Its name must contain 'target' to be found correctly.")
+		}
+	} else if len(channel) == 1 {
+		missing_fields := []string{}
+		if !config.Exists("customFields", "users", "githubUserField") {
+			log.Error("Github user custom field is not created or could not be found. Its name must contain 'github' to be found correctly.")
+			missing_fields = append(missing_fields, "githubUserField")
+		} else if !config.Exists("customFields", "work_packages", "repoField") {
+			log.Error("Repository custom field is not created or could not be found. Its name must contain 'repo' to be found correctly.")
+			missing_fields = append(missing_fields, "repoField")
+		} else if !config.Exists("customFields", "work_packages", "sourceBranchField") {
+			log.Error("Source branch custom field is not created or could not be found. Its name must contain 'source' to be found correctly.")
+			missing_fields = append(missing_fields, "sourceBranchField")
+		} else if !config.Exists("customFields", "work_packages", "targetBranchField") {
+			log.Error("Target branch custom field is not created or could not be found. Its name must contain 'target' to be found correctly.")
+			missing_fields = append(missing_fields, "targetBranchField")
+		}
+		channel[0] <- missing_fields
 	}
 }
 

@@ -15,12 +15,44 @@
         vertical-align: text-bottom;
         font-size: 24px;
       }
+      .btn-reset {
+        background-color: var(--primary-light);
+        color: var(--primary-dark);
+        
+        font-weight: 200;
+        font-family: var(--subtitle-font);
+        font-size: medium;
+        
+        position: relative;
+        padding: 5px 15px;
+        border: none;
+        outline: none;
+        border-radius: 2px;
+        cursor: pointer;
+    }
+
+    .btn-reset:hover {
+        background-color: var(--secondary-light);
+    }
+
+    .btn-reset:active {
+        background-color: var(--cerulean);
+    }
+
+    .btn-reset:focus {
+        background-color: var(--primary-light);
+    }
 </style>
 
 {{end}}
 
 {{define "navbar"}}
 <div class="topnav-right">
+    <button id="button-reset" type="button" class="btn btn-reset me-3 btn-lg" onclick="reset_date()">
+        <span>
+            Reset last refresh date 
+        </span>
+    </button>
     <button type="button" class="btn btn-sync me-3 btn-lg" onclick="loading()">
         <span class="btn-sync__text">
             Refresh 
@@ -63,6 +95,9 @@
                 <p id="login-label" class="mt-2" style="text-align: center;" hidden></p>
             </form>
         </div>
+        <div class="d-flex justify-content-center">
+            <button class="btn-two mt-2" type="button" name="op_checkfields" onclick="checkfields()">Check custom fields</button>
+        </div>
     </div>
 </div>
 
@@ -104,6 +139,28 @@
                 Swal.fire("URL saved", "", "info")
             });
         }
+    }
+</script>
+
+<script>
+    function checkfields() {
+        const url = window.location.href.split(location.pathname)[0] + "{{.subpath}}/api/check-custom-fields";
+        
+        fetch(url).then(res => {
+            return res.text()
+        }).then(text => {
+            let type = "success";
+            let title = "Custom filds have been checked";
+            if (text.startsWith("Error")) {
+                type = "error";
+                title = "Error checking custom fields"
+            }
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: type
+            })
+        })
     }
 </script>
 

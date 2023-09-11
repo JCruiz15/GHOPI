@@ -26,6 +26,8 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+// TODO - COMMENT NEW FUNCTIONS AND UPDATE INSTRUCTIONS
+
 /*Function init sets up logs format and log file metadata. Also loads .env file.*/
 func init() {
 	log.SetFormatter(&easy.Formatter{
@@ -77,6 +79,8 @@ func main() {
 	http.HandleFunc(fmt.Sprintf("%s/api/openproject", subpath), PostOpenProject)
 	http.HandleFunc(fmt.Sprintf("%s/api/github", subpath), PostGithub)
 	http.HandleFunc(fmt.Sprintf("%s/api/refresh", subpath), refreshProxy)
+	http.HandleFunc(fmt.Sprintf("%s/api/reset/refresh", subpath), resetRefreshDate)
+	http.HandleFunc(fmt.Sprintf("%s/api/check-custom-fields", subpath), checkFields)
 
 	http.HandleFunc(fmt.Sprintf("%s/github/login", subpath), github.LoginHandler)
 	http.HandleFunc(fmt.Sprintf("%s/github/login/callback", subpath), github.CallbackHandler)
@@ -241,9 +245,10 @@ func githubWebhook(w http.ResponseWriter, r *http.Request) {
 		orgName, errorJSON = jsonparser.GetString(jsonOrgName, "organizationName")
 		utils.Check(errorJSON, "error", "Error 500. The server did not received organization name correctly")
 	}
+	subpath := utils.GetSubpath()
 
 	if orgName != "" {
-		URL := fmt.Sprintf("https://%s%s", r.Host, "/api/github")
+		URL := fmt.Sprintf("https://%s%s%s", r.Host, subpath, "/api/github")
 
 		body := map[string]interface{}{
 			"name": "web",
@@ -436,4 +441,36 @@ func refreshProxy(w http.ResponseWriter, _ *http.Request) {
 	result := <-c
 
 	w.Write([]byte(result))
+}
+
+func resetRefreshDate(_ http.ResponseWriter, _ *http.Request) {
+
+	config, err := gabs.ParseJSONFile(utils.Config_path)
+	utils.Check(err, "Error", "Error 500. Config file could not be read")
+
+	config.Set("", "lastSync")
+
+	f, err := os.Create(utils.Config_path)
+	utils.Check(err, "Error", "Error creating config file on its destination path ('./.config')")
+	defer f.Close()
+
+	f.Write(config.BytesIndent("", "\t"))
+}
+
+func checkFields(w http.ResponseWriter, _ *http.Request) {
+
+	if !utils.CheckConnectionOpenProject() {
+		w.Write([]byte("Error: Connection with Open Project missing. Log in the app to check the custom fields"))
+		return
+	}
+
+	c := make(chan []string)
+	go utils.CheckCustomFields(c)
+	result := <-c
+	msg := "All custom fields are correctly implemented"
+	if len(result) > 0 {
+		indent, _ := json.MarshalIndent(result, "", "\t")
+		msg = fmt.Sprintf("Error: The following custom fields are missing --> %s", indent)
+	}
+	w.Write([]byte(msg))
 }
