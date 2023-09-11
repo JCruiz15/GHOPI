@@ -32,7 +32,7 @@ It also has a web interface which will provide an easy configuration process and
 ## Prerequisites
 [Go](https://go.dev/) version 1.19.1 or higher.
 [Docker](https://www.docker.com/) version 24.0.5 or higher.
-Any technology capable of make your app instance public.
+Any technology capable of make your app instance public, such as apache or nginx among others.
 
 ## Set up
 
@@ -40,7 +40,7 @@ Any technology capable of make your app instance public.
 
 As the GHOPI image is not public yet, you will need to build and run the image manually. 
 
-Firstly, clone this repository into your computer using git. Then create a `.env` file in GHOPI's path as explained in section [Setting up .env file](#setting-up-.env-file). Finally, use a terminal to execute the following commands and run the image on GHOPI. Be aware of changing the path to your own GHOPI's path.
+Firstly, clone this repository into your computer using git. Then create a `.env` file in GHOPI's path as explained in section [Setting up .env file](#setting-up-.env-file). Finally, use a terminal to execute the following commands and run the image on GHOPI. Be aware of changing the path to your own GHOPI's path and the config volume path with the absolute path to your config folder.
 
 ```shell
 cd </your/ghopi/path> 
@@ -53,13 +53,15 @@ docker run \
     -e OPENPROJECT_SECRETID=$OPENPROJECT_SECRETID \
     -e PORT=$PORT \
     -p $PORT:$PORT \
+    -v <abs/config/path>:/.config \
+    --name ghopi \
     -e URL_SUBPATH=$URL_SUBPATH \
     ghopi:latest
 ```
 
 This shell commands will set up and launch GHOPI free to use. Then use your chosen technology to launch the app publicly.
 
-> **NOTE**: A `deploy.sh` file is provided so the build and running of the image may be done automatically. Be sure to have the .env file filled up.
+<!-- > **NOTE**: A `deploy.sh` file is provided so the build and running of the image may be done automatically. Be sure to have the .env file filled up. -->
 
 ### Using Go 
 
@@ -69,7 +71,7 @@ Firstly, clone this repository into your computer using git. Then create a `.env
 go build -o GHOPI.exe main.go
 ```
 
-Which will create an executable file, named GHOPI, to use the app. Then use your chosen technology to launch the app publicly.
+Which will create an executable file, named `GHOPI.exe`, to use the app. Then use your chosen technology to launch the app publicly.
 
 ### Setting up .env file
 

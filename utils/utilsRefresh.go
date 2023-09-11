@@ -83,7 +83,7 @@ func Refresh(lastRefresh time.Time, channel chan string) {
 		pack, _ := json.Marshal(package_list[i])
 		repoURL, err := jsonparser.GetString(pack, GetCustomFields().RepoField)
 
-		if err != nil && strings.Contains(err.Error(), "null") { // If repo field is empty go to next work package
+		if (err != nil && strings.Contains(err.Error(), "null")) || repoURL == "" { // If repo field is empty go to next work package
 			subject, _ := jsonparser.GetString(pack, GetCustomFields().SourceBranchField)
 			id, _ := jsonparser.GetInt(pack, "id")
 			log.Warn(fmt.Sprintf(

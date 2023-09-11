@@ -3,6 +3,8 @@ FROM golang:1.19
 # move to container path /app
 WORKDIR /.
 
+VOLUME /.config
+
 # install dependencies
 COPY go.mod go.sum ./
 RUN go mod download

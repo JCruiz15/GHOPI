@@ -1,6 +1,7 @@
 #.dockerignore
 .env
 outputs.log
-.config/config.json
+*.json
 __debug_bin.exe
 .vscode
+nohup.out
