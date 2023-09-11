@@ -28,6 +28,8 @@ import (
 
 // TODO - COMMENT NEW FUNCTIONS AND UPDATE INSTRUCTIONS
 
+// TODO - IMPLEMENT API KEY METHOD FOR SOME FUNCTIONS
+
 /*Function init sets up logs format and log file metadata. Also loads .env file.*/
 func init() {
 	log.SetFormatter(&easy.Formatter{

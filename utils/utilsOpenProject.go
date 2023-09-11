@@ -206,8 +206,17 @@ func CheckCustomFields(channel ...chan []string) {
 Function customFieldsWorkpackages checks the existence and stores the value of 'repoField', 'sourceBranchField' and 'targetBranchField' custom fields.
 */
 func customFieldsWorkpackages() {
+	// Obtain Open PRoject token
+	f, err := os.Open(".config/config.json")
+	Check(err, "error", "Error 500. Config file could not be opened checking work packages custom fields. Config file may not exist")
+	defer f.Close()
+	config, _ := io.ReadAll(f)
+	token, err := jsonparser.GetString(config, "openproject-token")
+	Check(err, "error", "Open Project token not found when checking Work packages custom fields. Log in Open Project")
+
 	OP_url = GetOPuri()
-	filter := url.QueryEscape(`[{"id":{"operator":"=","values":["1-1"]}}]`)
+	lastProjectID := GetLastProjectID(OP_url, token)
+	filter := url.QueryEscape(fmt.Sprintf(`[{"id":{"operator":"=","values":["%d-1"]}}]`, lastProjectID))
 	url := OP_url + `/api/v3/work_packages/schemas?filters=` + filter
 	req, err := http.NewRequest(
 		"GET",
@@ -215,12 +224,6 @@ func customFieldsWorkpackages() {
 		bytes.NewBuffer([]byte("")),
 	)
 	Check(err, "error", "Open Project API request creation to get work packages custom fields failed")
-
-	f, err := os.Open(".config/config.json")
-	Check(err, "error", "Error 500. Config file could not be opened checking work packages custom fields. Config file may not exist")
-	defer f.Close()
-	config, _ := io.ReadAll(f)
-	token, _ := jsonparser.GetString(config, "openproject-token")
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	req.Header.Set("Content-Type", "application/json")
@@ -326,4 +329,44 @@ func writeConfigCustomFields(key string, value string, path string) {
 	Check(err, "Error", "Config file could not be created. Check permissions of editing of the app")
 	defer f.Close()
 	f.Write(config.BytesIndent("", "\t"))
+}
+
+func GetLastProjectID(op_url string, token string) int {
+	url := fmt.Sprintf("%s/api/v3/projects?select=[total,elements/name,elements/id]", op_url)
+	req, err := http.NewRequest(
+		"GET",
+		url,
+		bytes.NewBuffer([]byte("")),
+	)
+	if err != nil {
+		Check(err, "error", "Error when creating last project URL")
+		return 1
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		Check(err, "fatal", fmt.Sprintf("Open Project API call to get custom user fields failed (%s)", url))
+		return 1
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+
+	elements, _, _, err := jsonparser.Get(body, "_embedded", "elements")
+	if err != nil {
+		Check(err, "error", "Unauthenticated. Log again in Open Project to synchronize correctly")
+		return 1
+	}
+	// elements = elements[1:(len(elements) - 1)]
+
+	var searchKeys []map[string]interface{}
+	json.Unmarshal(elements, &searchKeys)
+	if len(searchKeys) < 1 {
+		log.Error("Error: No projects found in Open Project")
+		return 1
+	}
+
+	return int(searchKeys[0]["id"].(float64))
 }

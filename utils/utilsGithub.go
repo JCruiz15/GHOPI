@@ -216,11 +216,11 @@ func githubReadPermission(data []byte) int {
 	Check(err, "error", "Error 500. Config file could not be opened when giving reading permission. Config file may not exist")
 	defer f.Close()
 	config, _ := io.ReadAll(f)
-	token, err := jsonparser.GetString(config, "github-token")
-	if Check(err, "error", "Github token key was not found in config file. Check if you are correctly logged in") {
+	token, err := jsonparser.GetString(config, "openproject-token")
+	if Check(err, "error", "Open Project token key was not found in config file. Check if you are correctly logged in") {
 		return http.StatusNotFound
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := http.DefaultClient.Do(req)
 	Check(err, "fatal", fmt.Sprintf("Open project API call to obtain assignee reference failed (%s)", fmt.Sprintf("%s/%s", OP_url, assigneeRef)))
@@ -229,7 +229,11 @@ func githubReadPermission(data []byte) int {
 	user, err := jsonparser.GetString(respbody, GetCustomFields().GithubUserField)
 	Check(err, "error", "Github user was not found in custom fields of Open Project post. Check if it is included in config and in your Open Project correctly.")
 
-	return givePermission(GH_ORG, repo, user, READ, token)
+	tokenGH, err := jsonparser.GetString(config, "github-token")
+	if Check(err, "error", "Github token key was not found in config file. Check if you are correctly logged in") {
+		return http.StatusNotFound
+	}
+	return givePermission(GH_ORG, repo, user, READ, tokenGH)
 }
 
 /*
@@ -267,11 +271,11 @@ func githubWritePermission(data []byte) int {
 	Check(err, "error", "Error 500. Config file could not be opened when giving writing permission. Config file may not exist")
 	defer f.Close()
 	config, _ := io.ReadAll(f)
-	token, err := jsonparser.GetString(config, "github-token")
-	if Check(err, "error", "Github token key was not found in config file. Check if you are correctly logged in") {
+	token, err := jsonparser.GetString(config, "openproject-token")
+	if Check(err, "error", "Open Project token key was not found in config file. Check if you are correctly logged in") {
 		return http.StatusNotFound
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := http.DefaultClient.Do(req)
 	Check(err, "fatal", fmt.Sprintf("Open project API call to obtain assignee reference failed (%s)", fmt.Sprintf("%s/%s", OP_url, assigneeRef)))
@@ -280,7 +284,11 @@ func githubWritePermission(data []byte) int {
 	user, err := jsonparser.GetString(respbody, GetCustomFields().GithubUserField)
 	Check(err, "error", "Github user was not found in custom fields of Open Project post. Check if it is included in config and in your Open Project correctly.")
 
-	return givePermission(GH_ORG, repo, user, WRITE, token)
+	tokenGH, err := jsonparser.GetString(config, "github-token")
+	if Check(err, "error", "Github token key was not found in config file. Check if you are correctly logged in") {
+		return http.StatusNotFound
+	}
+	return givePermission(GH_ORG, repo, user, WRITE, tokenGH)
 
 }
 
