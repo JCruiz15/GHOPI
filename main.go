@@ -39,10 +39,10 @@ func init() {
 
 	log.SetOutput(io.MultiWriter(
 		&lumberjack.Logger{
-			Filename:   "outputs.log",
+			Filename:   ".config/outputs.log",
 			MaxSize:    1,
-			MaxBackups: 3,
-			MaxAge:     15,
+			MaxBackups: 5,
+			MaxAge:     30,
 			Compress:   true,
 		},
 		os.Stdout,
@@ -177,7 +177,7 @@ func logs(w http.ResponseWriter, _ *http.Request) {
 
 /*Function getLogs reads output.txt and returns its information as an html plain text*/
 func getLogs(w http.ResponseWriter, _ *http.Request) {
-	file, err := os.Open("outputs.log")
+	file, err := os.Open(".config/outputs.log")
 	utils.Check(err, "error", "Error 500. Logs file could not be open")
 	defer file.Close()
 
@@ -288,7 +288,7 @@ func githubWebhook(w http.ResponseWriter, r *http.Request) {
 		utils.Check(err, "error", "Error 500. Config file could not be opened. Config file may not exist")
 		config, _ := io.ReadAll(f)
 		token, _ := jsonparser.GetString(config, "github-token")
-		req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
@@ -389,11 +389,12 @@ func PostGithub(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		go utils.OpenProjectOptions(byte_body)
-		t, _ := jsonparser.GetString(byte_body, "ref_type")
-		fullname, _ := jsonparser.GetString(byte_body, "repository", "fullname")
+		event := r.Header.Get("X-GitHub-Event")
+		repo_fullname, _ := jsonparser.GetString(byte_body, "repository", "full_name")
 		user, _ := jsonparser.GetString(byte_body, "sender", "login")
+		organization, _ := jsonparser.GetString(byte_body, "organization", "login")
 
-		log.Info(fmt.Sprintf("Github POST received. Post type: '%s'; Repository: '%s'; User: '%s' ", t, fullname, user))
+		log.Info(fmt.Sprintf("Github POST received. Post event: '%s'; Organization: %s; Repository: '%s'; User: '%s' ", event, organization, repo_fullname, user))
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
@@ -434,7 +435,7 @@ func refreshProxy(w http.ResponseWriter, _ *http.Request) {
 		config.Set(lastRefresh.Format("2006-01-02T15:04:05Z"), "lastSync")
 	}
 	f, err := os.Create(utils.Config_path)
-	utils.Check(err, "fatal", "Error 500. Config file could not be created on refresh")
+	utils.Check(err, "error", "Error 500. Config file could not be created on refresh")
 	defer f.Close()
 	f.Write(config.BytesIndent("", "\t"))
 
@@ -445,6 +446,9 @@ func refreshProxy(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte(result))
 }
 
+/*
+Function resetRefreshDate deletes the latest refresh date stored in config.json
+*/
 func resetRefreshDate(_ http.ResponseWriter, _ *http.Request) {
 
 	config, err := gabs.ParseJSONFile(utils.Config_path)
@@ -459,6 +463,9 @@ func resetRefreshDate(_ http.ResponseWriter, _ *http.Request) {
 	f.Write(config.BytesIndent("", "\t"))
 }
 
+/*
+Function checkFields calls utils.CheckCustomFields() whenever is needed and checks the Open Project custom fields on demand.
+*/
 func checkFields(w http.ResponseWriter, _ *http.Request) {
 
 	if !utils.CheckConnectionOpenProject() {

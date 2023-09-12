@@ -55,7 +55,7 @@ func openprojectMsg(msg string, id int) {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open Project API call to send message failed (%s)", fmt.Sprintf("%s/api/v3/work_packages/%d/activities", OP_url, id)))
+	Check(err, "error", fmt.Sprintf("Open Project API call to send message failed (%s)", fmt.Sprintf("%s/api/v3/work_packages/%d/activities", OP_url, id)))
 	if resp.StatusCode != 200 {
 		log.Error("Pull request message could not be sent correctly. Check if the custom fields are correctly inserted.")
 	} else {
@@ -105,7 +105,7 @@ func openprojectChangeStatus(data []byte, status_id int) {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open Project API call to change work package '%d' status failed (%s)", id, fmt.Sprintf("%s/api/v3/work_packages/%d", OP_url, id)))
+	Check(err, "error", fmt.Sprintf("Open Project API call to change work package '%d' status failed (%s)", id, fmt.Sprintf("%s/api/v3/work_packages/%d", OP_url, id)))
 	log.Info(resp.Status)
 
 }
@@ -148,7 +148,7 @@ func getLockVersion(wp_id int) int {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open Project API call to get lock version of work package '%d' failed (%s)", wp_id, fmt.Sprintf("%s/api/v3/work_packages/%d", OP_url, wp_id)))
+	Check(err, "error", fmt.Sprintf("Open Project API call to get lock version of work package '%d' failed (%s)", wp_id, fmt.Sprintf("%s/api/v3/work_packages/%d", OP_url, wp_id)))
 	body, _ := io.ReadAll(resp.Body)
 	lockV, err := jsonparser.GetInt(body, "lockVersion")
 	Check(err, "error", "lockVersion was not found in response body from Open Project API call to get lock version")
@@ -229,7 +229,7 @@ func customFieldsWorkpackages() {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open Project API call to get work packages custom fields failed (%s)", url))
+	Check(err, "error", fmt.Sprintf("Open Project API call to get work packages custom fields failed (%s)", url))
 
 	body, _ := io.ReadAll(resp.Body)
 
@@ -286,7 +286,7 @@ func customFieldsUser() {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open Project API call to get custom user fields failed (%s)", url))
+	Check(err, "error", fmt.Sprintf("Open Project API call to get custom user fields failed (%s)", url))
 
 	body, _ := io.ReadAll(resp.Body)
 
@@ -331,6 +331,12 @@ func writeConfigCustomFields(key string, value string, path string) {
 	f.Write(config.BytesIndent("", "\t"))
 }
 
+/*
+Function GetLastProjectID is used to obtain the latest project of an Open Project instance.
+This is done to be able to check correctly the connection and custom fields of Open Project.
+
+The function returns an integer, indicating the latest project ID.
+*/
 func GetLastProjectID(op_url string, token string) int {
 	url := fmt.Sprintf("%s/api/v3/projects?select=[total,elements/name,elements/id]", op_url)
 	req, err := http.NewRequest(
@@ -348,7 +354,7 @@ func GetLastProjectID(op_url string, token string) int {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		Check(err, "fatal", fmt.Sprintf("Open Project API call to get custom user fields failed (%s)", url))
+		Check(err, "error", fmt.Sprintf("Open Project API call to get custom user fields failed (%s)", url))
 		return 1
 	}
 

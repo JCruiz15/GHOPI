@@ -56,6 +56,7 @@ docker run \
     -v <abs/config/path>:/.config \
     --name ghopi \
     -e URL_SUBPATH=$URL_SUBPATH \
+    -d \
     ghopi:latest
 ```
 

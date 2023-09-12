@@ -136,7 +136,7 @@ func GithubOptions(data []byte) {
 			case "In progress":
 				go githubWritePermission(data)
 			case "Closed", "Rejected":
-				go githubReadPermission(data)
+				go githubRemoveUserFromOP(data)
 			default:
 				go githubWritePermission(data)
 			}
