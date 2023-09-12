@@ -75,6 +75,16 @@ func GetOPuri() string {
 	}
 }
 
+func APIkeyCheck(r *http.Request) bool {
+
+	auth := r.Header.Get("Authentication")
+	key, ok := strings.CutPrefix(auth, "Bearer ")
+	if ok {
+		return key == os.Getenv("API_KEY")
+	}
+	return false
+}
+
 // ====== From OPENPROJECT To GITHUB ======
 
 /*
@@ -207,14 +217,6 @@ func OpenProjectOptions(data []byte) {
 			)
 		}
 	}
-}
-
-func APIkeyCheck(r *http.Request) bool {
-
-	auth := r.Header.Get("Authentication")
-	fmt.Println(auth)
-
-	return false
 }
 
 // ====== PINGS ======

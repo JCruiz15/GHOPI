@@ -52,10 +52,12 @@ docker run \
     -e OPENPROJECT_CLIENTID=$OPENPROJECT_CLIENTID \
     -e OPENPROJECT_SECRETID=$OPENPROJECT_SECRETID \
     -e PORT=$PORT \
+    -e URL_SUBPATH=$URL_SUBPATH \
+    -e API_KEY=$API_KEY \
     -p $PORT:$PORT \
     -v <abs/config/path>:/.config \
     --name ghopi \
-    -e URL_SUBPATH=$URL_SUBPATH \
+    
     -d \
     ghopi:latest
 ```

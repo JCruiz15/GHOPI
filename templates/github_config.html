@@ -121,6 +121,7 @@
                     fetch('{{.subpath}}/github/webhook', {
                         method: 'POST',
                         headers: {
+                            'Authentication': 'Bearer '.concat(readCookie("apikey")),
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify(data),
@@ -147,17 +148,30 @@
 </script>
 
 <script>
-    const url_config = window.location.href.split(location.pathname)[0] + "{{.subpath}}/api/get-config";
-
     async function get_config() {
-        let response = await fetch(url_config);
-        let data = await response.text();
-        return data;
+        let res
+        let response = await fetch(url_config, {
+            headers: {'Authentication': 'Bearer '.concat(readCookie("apikey"))}
+        }).then(
+            (response) => {
+                if(response.ok) {
+                    res = response.json()
+                } 
+                else {
+                    res = null
+                }
+            }
+        )
+        return res
+        
     }
 
     async function show_user() {
         config = await get_config();
-        config = JSON.parse(config);
+        if(config == null) {
+            return
+        }
+        
         if(config['github-user'] != "" && config['github-user'] != undefined) {
             let label = document.getElementById("login-label");
             label.innerHTML = "Signed in as <b>" + config['github-user'] + "</b>";
