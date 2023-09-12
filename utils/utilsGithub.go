@@ -73,8 +73,11 @@ func createBranch(token string, repoName string, orgName string, source string, 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	req.Header.Set("Accept", "application/vnd.github+json")
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Github API call to create a new branch '%s' failed (%s)", source, fmt.Sprintf("https://api.github.com/repos/%s/%s/git/refs", orgName, repoName)))
+	Check(err, "error", fmt.Sprintf("Github API call to create a new branch '%s' failed (%s)", source, fmt.Sprintf("https://api.github.com/repos/%s/%s/git/refs", orgName, repoName)))
 
+	if resp.StatusCode == 201 {
+		log.Info(fmt.Sprintf("Branch '%s' was successfully created in repository '%s'", source, repoName))
+	}
 	return resp.StatusCode
 }
 
@@ -88,10 +91,10 @@ func getLastcommit(token string, repoName string, GH_ORG string, target string) 
 		strings.NewReader(""),
 	)
 
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Github did not respond to API call to obtain target branch '%s' sha (%s)", target, fmt.Sprintf("https://api.github.com/repos/%s/%s/commits/%s", GH_ORG, repoName, target)))
+	Check(err, "error", fmt.Sprintf("Github did not respond to API call to obtain target branch '%s' sha (%s)", target, fmt.Sprintf("https://api.github.com/repos/%s/%s/commits/%s", GH_ORG, repoName, target)))
 
 	respbody, err := io.ReadAll(resp.Body)
 	Check(err, "error", "Error when reading the response body from Github")
@@ -101,93 +104,16 @@ func getLastcommit(token string, repoName string, GH_ORG string, target string) 
 	return sha
 }
 
-// func github_createPR(data []byte) int {
-// 	// Get repository
-// 	repo, err := jsonparser.GetString(data, "work_package", RepoField)
-// 	Check(err, "warning")
-// 	r := strings.Split(repo, "/")
-// 	repoName := r[len(r)-1]
-// 	GH_ORG := r[len(r)-1]
-
-// 	// Get name of task
-// 	subject, err2 := jsonparser.GetString(data, "work_package", "subject")
-// 	Check(err2, "warning")
-
-// 	// Get id of task
-// 	id, err3 := jsonparser.GetInt(data, "work_package", "id")
-// 	Check(err3, "warning")
-
-// 	// Get description of task
-// 	desc, err4 := jsonparser.GetString(data, "work_package", "description", "raw")
-// 	Check(err4, "warning")
-
-// 	f, err := os.Open(".config/config.json")
-// 	Check(err, "error")
-// 	config, _ := io.ReadAll(f)
-// 	token, err := jsonparser.GetString(config, "github-token")
-// 	if Check(err, "error") {
-// 		return http.StatusNotFound
-// 	}
-
-// 	// Get branch
-// 	branch := get_branch(data, token, repoName, subject, GH_ORG)
-
-// 	// Body for request
-
-// 	bodyMap := map[string]string{
-// 		"title": fmt.Sprintf("%s[%d]", subject, id),
-// 		"body":  desc,
-// 		"head":  branch,
-// 		"base":  "main",
-// 	}
-// 	requestJSON, _ := json.Marshal(bodyMap)
-
-// 	req, err := http.NewRequest(
-// 		"POST",
-// 		fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", GH_ORG, repoName),
-// 		bytes.NewBuffer(requestJSON),
-// 	)
-// 	Check(err, "fatal")
-
-// 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
-
-// 	resp, err := http.DefaultClient.Do(req)
-// 	Check(err, "fatal")
-
-// 	return resp.StatusCode
-
-// }
-
-// func get_branch(data []byte, token string, repoName string, subject string, GH_ORG string) string {
-// 	req, _ := http.NewRequest(
-// 		"GET",
-// 		fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s", GH_ORG, repoName, subject),
-// 		strings.NewReader(""),
-// 	)
-
-// 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
-
-// 	resp, err := http.DefaultClient.Do(req)
-// 	Check(err, "fatal")
-// 	respbody, err := io.ReadAll(resp.Body)
-// 	Check(err, "error")
-// 	var branch string
-// 	branch, err_notFound := jsonparser.GetString(respbody, "name")
-// 	if err_notFound != nil {
-// 		github_createBranch(data)
-// 		branch = subject
-// 	}
-
-// 	return branch
-// }
-
 /*
 githubReadPermission receives data from an Open Project POST and obtains the information needed from it to give READ permission to the user assigned to a task.
 
 It uses the givePermission function to call the GitHub API.
+
+This function is deprecated because the base role of a GitHub organization has an implicit read only permission. So githubRemoveUser will be used instead.
 */
+/*
 func githubReadPermission(data []byte) int {
-	/*Obtain the assigne reference from Open Project POST*/
+	// Obtain the assigne reference from Open Project POST
 	assigneeRef, err := jsonparser.GetString(data, "work_package", "_links", "assignee", "href")
 	if Check(err, "error", "Assignee on Open Project information was not found") {
 		task, _ := jsonparser.GetString(data, "work_package", "subject")
@@ -195,7 +121,8 @@ func githubReadPermission(data []byte) int {
 		log.Error(fmt.Sprintf("Task %s(%d) have no assignee. Attach a new collaborator to assign new permissions.This error provoked the last one", task, id))
 		return http.StatusNotFound
 	}
-	/*Obtain the work package ID from Open Project POST*/
+
+	// Obtain the work package ID from Open Project POST
 	id, err := jsonparser.GetString(data, "work_package", "id")
 	Check(err, "error", "ID was not found on work package")
 	repoURL, err := jsonparser.GetString(data, "work_package", GetCustomFields().RepoField)
@@ -205,7 +132,7 @@ func githubReadPermission(data []byte) int {
 	GH_ORG := r[len(r)-2]
 	OP_url = GetOPuri()
 
-	/*Obtain the github user from the assignee information in Open Project*/
+	//Obtain the github user from the assignee information in Open Project
 	req, _ := http.NewRequest(
 		"GET",
 		fmt.Sprintf("%s/%s", OP_url, assigneeRef),
@@ -216,21 +143,25 @@ func githubReadPermission(data []byte) int {
 	Check(err, "error", "Error 500. Config file could not be opened when giving reading permission. Config file may not exist")
 	defer f.Close()
 	config, _ := io.ReadAll(f)
-	token, err := jsonparser.GetString(config, "github-token")
-	if Check(err, "error", "Github token key was not found in config file. Check if you are correctly logged in") {
+	token, err := jsonparser.GetString(config, "openproject-token")
+	if Check(err, "error", "Open Project token key was not found in config file. Check if you are correctly logged in") {
 		return http.StatusNotFound
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open project API call to obtain assignee reference failed (%s)", fmt.Sprintf("%s/%s", OP_url, assigneeRef)))
+	Check(err, "error", fmt.Sprintf("Open project API call to obtain assignee reference failed (%s)", fmt.Sprintf("%s/%s", OP_url, assigneeRef)))
 	respbody, err := io.ReadAll(resp.Body)
 	Check(err, "error", "Post body could not be read")
 	user, err := jsonparser.GetString(respbody, GetCustomFields().GithubUserField)
 	Check(err, "error", "Github user was not found in custom fields of Open Project post. Check if it is included in config and in your Open Project correctly.")
 
-	return givePermission(GH_ORG, repo, user, READ, token)
-}
+	tokenGH, err := jsonparser.GetString(config, "github-token")
+	if Check(err, "error", "Github token key was not found in config file. Check if you are correctly logged in") {
+		return http.StatusNotFound
+	}
+	return givePermission(GH_ORG, repo, user, READ, tokenGH)
+} */
 
 /*
 githubReadPermission receives data from an Open Project POST and obtains the information needed from it to give WRITE permission to the user assigned to a task.
@@ -267,20 +198,24 @@ func githubWritePermission(data []byte) int {
 	Check(err, "error", "Error 500. Config file could not be opened when giving writing permission. Config file may not exist")
 	defer f.Close()
 	config, _ := io.ReadAll(f)
-	token, err := jsonparser.GetString(config, "github-token")
-	if Check(err, "error", "Github token key was not found in config file. Check if you are correctly logged in") {
+	token, err := jsonparser.GetString(config, "openproject-token")
+	if Check(err, "error", "Open Project token key was not found in config file. Check if you are correctly logged in") {
 		return http.StatusNotFound
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open project API call to obtain assignee reference failed (%s)", fmt.Sprintf("%s/%s", OP_url, assigneeRef)))
+	Check(err, "error", fmt.Sprintf("Open project API call to obtain assignee reference failed (%s)", fmt.Sprintf("%s/%s", OP_url, assigneeRef)))
 	respbody, err := io.ReadAll(resp.Body)
 	Check(err, "error", "Post body could not be read")
 	user, err := jsonparser.GetString(respbody, GetCustomFields().GithubUserField)
 	Check(err, "error", "Github user was not found in custom fields of Open Project post. Check if it is included in config and in your Open Project correctly.")
 
-	return givePermission(GH_ORG, repo, user, WRITE, token)
+	tokenGH, err := jsonparser.GetString(config, "github-token")
+	if Check(err, "error", "Github token key was not found in config file. Check if you are correctly logged in") {
+		return http.StatusNotFound
+	}
+	return givePermission(GH_ORG, repo, user, WRITE, tokenGH)
 
 }
 
@@ -303,15 +238,99 @@ func givePermission(organization string, repo string, user string, slope permiss
 		bytes.NewBuffer(jsonBody),
 	)
 
-	req_perm.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	req_perm.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp_perm, err := http.DefaultClient.Do(req_perm)
-	Check(err, "fatal", fmt.Sprintf("Github API call to give permission to user '%s' in repository '%s' failed (%s)", user, repo, fmt.Sprintf("https://api.github.com/repos/%s/%s/collaborators/%s", organization, repo, user)))
+	Check(err, "error", fmt.Sprintf("Github API call to give permission to user '%s' in repository '%s' failed (%s)", user, repo, fmt.Sprintf("https://api.github.com/repos/%s/%s/collaborators/%s", organization, repo, user)))
 
 	if resp_perm.StatusCode >= 200 && resp_perm.StatusCode <= 299 {
-		log.Info(fmt.Sprintf("%s have got write permissions in %s repository", user, repo))
+		log.Info(fmt.Sprintf("%s have got %s permissions in '%s' repository", user, slope, repo))
 	} else {
-		log.Error(fmt.Sprintf("Error %d: Could not give %s permissions", resp_perm.StatusCode, slope))
+		log.Error(fmt.Sprintf("Error %d: Could not give %s permissions in '%s' repository", resp_perm.StatusCode, slope, repo))
 	}
 	return resp_perm.StatusCode
+}
+
+/*
+githubRemoveUserFromOP receives data from an Open Project POST and obtains the information needed from it to remove an user assigned to a CLOSED task from its repository.
+
+It uses the githubRemoveUser function to call the GitHub API.
+*/
+func githubRemoveUserFromOP(data []byte) int {
+	/*Obtain the assigne reference from Open Project POST*/
+	assigneeRef, err := jsonparser.GetString(data, "work_package", "_links", "assignee", "href")
+	if Check(err, "error", "") {
+		task, _ := jsonparser.GetString(data, "work_package", "subject")
+		id, _ := jsonparser.GetInt(data, "work_package", "id")
+		log.Error(fmt.Sprintf("Task %s(%d) have no assignee. Attach a new collaborator to assign new permissions.This error provoked the last one", task, id))
+		return http.StatusNotFound
+	}
+	/*Obtain the work package repository associated from Open Project POST*/
+	id, err := jsonparser.GetString(data, "work_package", "id")
+	Check(err, "error", "ID was not found on work package")
+	repoURL, err := jsonparser.GetString(data, "work_package", GetCustomFields().RepoField)
+	Check(err, "warning", fmt.Sprintf("Repository was not found on work package with id '%s'", id))
+	r := strings.Split(repoURL, "/")
+	repo := r[len(r)-1]
+	GH_ORG := r[len(r)-2]
+	OP_url = GetOPuri()
+
+	/*Obtain the github user from the assignee information in Open Project*/
+	req, _ := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/%s", OP_url, assigneeRef),
+		strings.NewReader(""),
+	)
+
+	f, err := os.Open(".config/config.json")
+	Check(err, "error", "Error 500. Config file could not be opened when giving writing permission. Config file may not exist")
+	defer f.Close()
+	config, _ := io.ReadAll(f)
+	token, err := jsonparser.GetString(config, "openproject-token")
+	if Check(err, "error", "Open Project token key was not found in config file. Check if you are correctly logged in") {
+		return http.StatusNotFound
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	resp, err := http.DefaultClient.Do(req)
+	Check(err, "error", fmt.Sprintf("Open project API call to obtain assignee reference failed (%s)", fmt.Sprintf("%s/%s", OP_url, assigneeRef)))
+	respbody, err := io.ReadAll(resp.Body)
+	Check(err, "error", "Post body could not be read")
+	GHuser, err := jsonparser.GetString(respbody, GetCustomFields().GithubUserField)
+	Check(err, "error", "Github user was not found in custom fields of Open Project post. Check if it is included in config and in your Open Project correctly.")
+
+	tokenGH, err := jsonparser.GetString(config, "github-token")
+	if Check(err, "error", "Github token key was not found in config file. Check if you are correctly logged in") {
+		return http.StatusNotFound
+	}
+
+	// Send GitHub the call to remove an user
+	return githubRemoveUser(GH_ORG, repo, GHuser, tokenGH)
+
+}
+
+/*
+githubRemoveUser is the general function that uses the GitHub API to remove an 'user' given as a string from a 'repository' given.
+
+It returns the status code of the response and logs the output.
+*/
+func githubRemoveUser(organization string, repo string, user string, token string) int {
+	req_remove, _ := http.NewRequest(
+		"DELETE",
+		fmt.Sprintf("https://api.github.com/repos/%s/%s/collaborators/%s", organization, repo, user),
+		nil,
+	)
+
+	req_remove.Header.Set("Accept", "application/vnd.github+json")
+	req_remove.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	resp, err := http.DefaultClient.Do(req_remove)
+	Check(err, "error", fmt.Sprintf("Github API call to remove user '%s' from repository '%s' failed (%s)", user, repo, fmt.Sprintf("https://api.github.com/repos/%s/%s/collaborators/%s", organization, repo, user)))
+
+	if resp.StatusCode == 204 {
+		log.Info(fmt.Sprintf("%s has been successfully removed from '%s' repository", user, repo))
+	} else {
+		log.Error(fmt.Sprintf("Error %d: Could remove user %s from repository '%s'", resp.StatusCode, user, repo))
+	}
+	return resp.StatusCode
 }

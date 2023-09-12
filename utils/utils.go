@@ -114,9 +114,9 @@ func GithubOptions(data []byte) {
 			Check(err, "error", "Error 500. Config file could not be opened when GitHub post was received. Config file may not exist")
 			defer f.Close()
 			config, _ := io.ReadAll(f)
-			token, err := jsonparser.GetString(config, "github-token")
-			Check(err, "error", "Error when getting github token check if the field exists in .config file and if it is correctly cumplimented. Try to log in again on Github")
-			req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+			token, err := jsonparser.GetString(config, "openproject-token")
+			Check(err, "error", "Error when getting Open Project token, check if the field exists in .config file and if it is correctly cumplimented. Try to log in again on Open Project")
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 			resp, _ := http.DefaultClient.Do(req)
 			respbody, err := io.ReadAll(resp.Body)
@@ -136,7 +136,7 @@ func GithubOptions(data []byte) {
 			case "In progress":
 				go githubWritePermission(data)
 			case "Closed", "Rejected":
-				go githubReadPermission(data)
+				go githubRemoveUserFromOP(data)
 			default:
 				go githubWritePermission(data)
 			}
@@ -253,14 +253,14 @@ func CheckConnectionGithub() bool {
 	// Checking the ratelimit if it is smaller than 5000 the token does not have permissions and it is not valid.
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("https://api.github.com/users/%s", user),
+		fmt.Sprintf("https://api.github.com/users/%s", user.Data().(string)),
 		nil,
 	)
 	if Check(err, "error", "") {
 		return false
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", token.Data().(string)))
 
 	resp, _ := http.DefaultClient.Do(req)
 	ratelimit := resp.Header.Get("x-ratelimit-limit")
@@ -313,14 +313,14 @@ func CheckConnectionOpenProject() bool {
 	}
 
 	// If the name returned is not anonymus the token is valid, other way is not and will return false.
-	req, _ := http.NewRequest(
+	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/api/v3/users/me", OP_url),
+		fmt.Sprintf("%s/api/v3/users/me", OP_url.Data().(string)),
 		nil,
 	)
 	Check(err, "error", "")
 
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.Data().(string)))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

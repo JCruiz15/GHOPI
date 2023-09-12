@@ -55,7 +55,7 @@ func openprojectMsg(msg string, id int) {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open Project API call to send message failed (%s)", fmt.Sprintf("%s/api/v3/work_packages/%d/activities", OP_url, id)))
+	Check(err, "error", fmt.Sprintf("Open Project API call to send message failed (%s)", fmt.Sprintf("%s/api/v3/work_packages/%d/activities", OP_url, id)))
 	if resp.StatusCode != 200 {
 		log.Error("Pull request message could not be sent correctly. Check if the custom fields are correctly inserted.")
 	} else {
@@ -105,7 +105,7 @@ func openprojectChangeStatus(data []byte, status_id int) {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open Project API call to change work package '%d' status failed (%s)", id, fmt.Sprintf("%s/api/v3/work_packages/%d", OP_url, id)))
+	Check(err, "error", fmt.Sprintf("Open Project API call to change work package '%d' status failed (%s)", id, fmt.Sprintf("%s/api/v3/work_packages/%d", OP_url, id)))
 	log.Info(resp.Status)
 
 }
@@ -148,7 +148,7 @@ func getLockVersion(wp_id int) int {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open Project API call to get lock version of work package '%d' failed (%s)", wp_id, fmt.Sprintf("%s/api/v3/work_packages/%d", OP_url, wp_id)))
+	Check(err, "error", fmt.Sprintf("Open Project API call to get lock version of work package '%d' failed (%s)", wp_id, fmt.Sprintf("%s/api/v3/work_packages/%d", OP_url, wp_id)))
 	body, _ := io.ReadAll(resp.Body)
 	lockV, err := jsonparser.GetInt(body, "lockVersion")
 	Check(err, "error", "lockVersion was not found in response body from Open Project API call to get lock version")
@@ -161,7 +161,7 @@ Function CheckCustomFields has the purpose of checking if the custom fields need
 
 It uses customFieldsWorkpackages and customFieldsUser functions to check the custom fields from work packages and users, respectively.
 */
-func CheckCustomFields() {
+func CheckCustomFields(channel ...chan []string) {
 
 	// It is executed when you log into Open Project and do a syunchronization
 
@@ -173,14 +173,32 @@ func CheckCustomFields() {
 	config, err := gabs.ParseJSONFile(config_path)
 	Check(err, "Error", "Error 500. Config file could not be read")
 
-	if !config.Exists("customFields", "users", "githubUserField") {
-		log.Error("Github user custom field is not created or could not be found. Its name must contain 'github' to be found correctly.")
-	} else if !config.Exists("customFields", "work_packages", "repoField") {
-		log.Error("Repository custom field is not created or could not be found. Its name must contain 'repo' to be found correctly.")
-	} else if !config.Exists("customFields", "work_packages", "sourceBranchField") {
-		log.Error("Source branch custom field is not created or could not be found. Its name must contain 'source' to be found correctly.")
-	} else if !config.Exists("customFields", "work_packages", "targetBranchField") {
-		log.Error("Target branch custom field is not created or could not be found. Its name must contain 'target' to be found correctly.")
+	if len(channel) < 1 {
+		if !config.Exists("customFields", "users", "githubUserField") {
+			log.Error("Github user custom field is not created or could not be found. Its name must contain 'github' to be found correctly.")
+		} else if !config.Exists("customFields", "work_packages", "repoField") {
+			log.Error("Repository custom field is not created or could not be found. Its name must contain 'repo' to be found correctly.")
+		} else if !config.Exists("customFields", "work_packages", "sourceBranchField") {
+			log.Error("Source branch custom field is not created or could not be found. Its name must contain 'source' to be found correctly.")
+		} else if !config.Exists("customFields", "work_packages", "targetBranchField") {
+			log.Error("Target branch custom field is not created or could not be found. Its name must contain 'target' to be found correctly.")
+		}
+	} else if len(channel) == 1 {
+		missing_fields := []string{}
+		if !config.Exists("customFields", "users", "githubUserField") {
+			log.Error("Github user custom field is not created or could not be found. Its name must contain 'github' to be found correctly.")
+			missing_fields = append(missing_fields, "githubUserField")
+		} else if !config.Exists("customFields", "work_packages", "repoField") {
+			log.Error("Repository custom field is not created or could not be found. Its name must contain 'repo' to be found correctly.")
+			missing_fields = append(missing_fields, "repoField")
+		} else if !config.Exists("customFields", "work_packages", "sourceBranchField") {
+			log.Error("Source branch custom field is not created or could not be found. Its name must contain 'source' to be found correctly.")
+			missing_fields = append(missing_fields, "sourceBranchField")
+		} else if !config.Exists("customFields", "work_packages", "targetBranchField") {
+			log.Error("Target branch custom field is not created or could not be found. Its name must contain 'target' to be found correctly.")
+			missing_fields = append(missing_fields, "targetBranchField")
+		}
+		channel[0] <- missing_fields
 	}
 }
 
@@ -188,8 +206,17 @@ func CheckCustomFields() {
 Function customFieldsWorkpackages checks the existence and stores the value of 'repoField', 'sourceBranchField' and 'targetBranchField' custom fields.
 */
 func customFieldsWorkpackages() {
+	// Obtain Open PRoject token
+	f, err := os.Open(".config/config.json")
+	Check(err, "error", "Error 500. Config file could not be opened checking work packages custom fields. Config file may not exist")
+	defer f.Close()
+	config, _ := io.ReadAll(f)
+	token, err := jsonparser.GetString(config, "openproject-token")
+	Check(err, "error", "Open Project token not found when checking Work packages custom fields. Log in Open Project")
+
 	OP_url = GetOPuri()
-	filter := url.QueryEscape(`[{"id":{"operator":"=","values":["1-1"]}}]`)
+	lastProjectID := GetLastProjectID(OP_url, token)
+	filter := url.QueryEscape(fmt.Sprintf(`[{"id":{"operator":"=","values":["%d-1"]}}]`, lastProjectID))
 	url := OP_url + `/api/v3/work_packages/schemas?filters=` + filter
 	req, err := http.NewRequest(
 		"GET",
@@ -198,17 +225,11 @@ func customFieldsWorkpackages() {
 	)
 	Check(err, "error", "Open Project API request creation to get work packages custom fields failed")
 
-	f, err := os.Open(".config/config.json")
-	Check(err, "error", "Error 500. Config file could not be opened checking work packages custom fields. Config file may not exist")
-	defer f.Close()
-	config, _ := io.ReadAll(f)
-	token, _ := jsonparser.GetString(config, "openproject-token")
-
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open Project API call to get work packages custom fields failed (%s)", url))
+	Check(err, "error", fmt.Sprintf("Open Project API call to get work packages custom fields failed (%s)", url))
 
 	body, _ := io.ReadAll(resp.Body)
 
@@ -265,7 +286,7 @@ func customFieldsUser() {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open Project API call to get custom user fields failed (%s)", url))
+	Check(err, "error", fmt.Sprintf("Open Project API call to get custom user fields failed (%s)", url))
 
 	body, _ := io.ReadAll(resp.Body)
 
@@ -308,4 +329,50 @@ func writeConfigCustomFields(key string, value string, path string) {
 	Check(err, "Error", "Config file could not be created. Check permissions of editing of the app")
 	defer f.Close()
 	f.Write(config.BytesIndent("", "\t"))
+}
+
+/*
+Function GetLastProjectID is used to obtain the latest project of an Open Project instance.
+This is done to be able to check correctly the connection and custom fields of Open Project.
+
+The function returns an integer, indicating the latest project ID.
+*/
+func GetLastProjectID(op_url string, token string) int {
+	url := fmt.Sprintf("%s/api/v3/projects?select=[total,elements/name,elements/id]", op_url)
+	req, err := http.NewRequest(
+		"GET",
+		url,
+		bytes.NewBuffer([]byte("")),
+	)
+	if err != nil {
+		Check(err, "error", "Error when creating last project URL")
+		return 1
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		Check(err, "error", fmt.Sprintf("Open Project API call to get custom user fields failed (%s)", url))
+		return 1
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+
+	elements, _, _, err := jsonparser.Get(body, "_embedded", "elements")
+	if err != nil {
+		Check(err, "error", "Unauthenticated. Log again in Open Project to synchronize correctly")
+		return 1
+	}
+	// elements = elements[1:(len(elements) - 1)]
+
+	var searchKeys []map[string]interface{}
+	json.Unmarshal(elements, &searchKeys)
+	if len(searchKeys) < 1 {
+		log.Error("Error: No projects found in Open Project")
+		return 1
+	}
+
+	return int(searchKeys[0]["id"].(float64))
 }

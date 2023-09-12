@@ -83,7 +83,7 @@ func Refresh(lastRefresh time.Time, channel chan string) {
 		pack, _ := json.Marshal(package_list[i])
 		repoURL, err := jsonparser.GetString(pack, GetCustomFields().RepoField)
 
-		if err != nil && strings.Contains(err.Error(), "null") { // If repo field is empty go to next work package
+		if (err != nil && strings.Contains(err.Error(), "null")) || repoURL == "" { // If repo field is empty go to next work package
 			subject, _ := jsonparser.GetString(pack, GetCustomFields().SourceBranchField)
 			id, _ := jsonparser.GetInt(pack, "id")
 			log.Warn(fmt.Sprintf(
@@ -102,7 +102,7 @@ func Refresh(lastRefresh time.Time, channel chan string) {
 				for i := 0; i < len(collabs); i++ {
 					collab, _ := json.Marshal(collabs[i])
 					user, _ := jsonparser.GetString(collab, "login")
-					givePermission(org, repoName, user, READ, gh_token)
+					githubRemoveUser(org, repoName, user, gh_token)
 				}
 				// Add repository to repo_list, to avoid repetitions
 				repo_list = append(repo_list, repoName)
@@ -212,7 +212,7 @@ func getGHuserFromAssigneehref(assigneehref string, token string) (string, error
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := http.DefaultClient.Do(req)
-	Check(err, "fatal", fmt.Sprintf("Open Project API call to obtain the assignee failed (%s)", fmt.Sprintf("%s%s", OP_url, assigneehref)))
+	Check(err, "error", fmt.Sprintf("Open Project API call to obtain the assignee failed (%s)", fmt.Sprintf("%s%s", OP_url, assigneehref)))
 	body, _ := io.ReadAll(resp.Body)
 	return jsonparser.GetString(body, GetCustomFields().GithubUserField)
 }
