@@ -20,19 +20,19 @@ It recieves data from Open Project, from which it takes the desired name of the 
 */
 func githubCreateBranch(data []byte) int {
 	// Get repository
-	id, err := jsonparser.GetString(data, "work_package", "id")
-	Check(err, "warning", "Id not found on Open Project post. It may not be a work package post.")
+	id, err := jsonparser.GetInt(data, "work_package", "id")
+	Check(err, "warning", "Id not found on Open Project post creating branch. It may not be a work package post.")
 	repo, err := jsonparser.GetString(data, "work_package", GetCustomFields().RepoField)
-	Check(err, "warning", fmt.Sprintf("Repository was not found on Open Project post. Work package id: '%s'", id))
+	Check(err, "warning", fmt.Sprintf("Repository was not found on Open Project post. Work package id: '%d'", id))
 	r := strings.Split(repo, "/")
 	repoName := r[len(r)-1]
 	GH_ORG := r[len(r)-2]
 
 	// Get name of task
 	branchName, err2 := jsonparser.GetString(data, "work_package", GetCustomFields().SourceBranchField)
-	Check(err2, "warning", fmt.Sprintf("Github new branch name was not found in Open Project post. Work package id: '%s'. Check if custom fields are correct", id))
+	Check(err2, "warning", fmt.Sprintf("Github new branch name was not found in Open Project post. Work package id: '%d'. Check if custom fields are correct", id))
 	targetBranch, err2 := jsonparser.GetString(data, "work_package", GetCustomFields().TargetBranchField)
-	Check(err2, "warning", fmt.Sprintf("Github target branch name was not found in Open Project post. Work package id: '%s'. Check if custom fields are correct", id))
+	Check(err2, "warning", fmt.Sprintf("Github target branch name was not found in Open Project post. Work package id: '%d'. Check if custom fields are correct", id))
 
 	f, err := os.Open(".config/config.json")
 	Check(err, "error", "Error 500. Config file could not be opened when creating a GitHub branch. Config file may not exist")
@@ -178,10 +178,10 @@ func githubWritePermission(data []byte) int {
 		return http.StatusNotFound
 	}
 	/*Obtain the work package ID from Open Project POST*/
-	id, err := jsonparser.GetString(data, "work_package", "id")
+	id, err := jsonparser.GetInt(data, "work_package", "id")
 	Check(err, "error", "ID was not found on work package")
 	repoURL, err := jsonparser.GetString(data, "work_package", GetCustomFields().RepoField)
-	Check(err, "warning", fmt.Sprintf("Repository was not found on work package with id '%s'", id))
+	Check(err, "warning", fmt.Sprintf("Repository was not found on work package with id '%d'", id))
 	r := strings.Split(repoURL, "/")
 	repo := r[len(r)-1]
 	GH_ORG := r[len(r)-2]
@@ -209,14 +209,12 @@ func githubWritePermission(data []byte) int {
 	respbody, err := io.ReadAll(resp.Body)
 	Check(err, "error", "Post body could not be read")
 	user, err := jsonparser.GetString(respbody, GetCustomFields().GithubUserField)
-	Check(err, "error", "Github user was not found in custom fields of Open Project post. Check if it is included in config and in your Open Project correctly.")
-
+	Check(err, "error", "Github user was not found in custom fields of Open Project post. Check if it is included in config and in your Open Project correctly or log in again in Open Project.")
 	tokenGH, err := jsonparser.GetString(config, "github-token")
 	if Check(err, "error", "Github token key was not found in config file. Check if you are correctly logged in") {
 		return http.StatusNotFound
 	}
 	return givePermission(GH_ORG, repo, user, WRITE, tokenGH)
-
 }
 
 /*
@@ -246,7 +244,7 @@ func givePermission(organization string, repo string, user string, slope permiss
 	if resp_perm.StatusCode >= 200 && resp_perm.StatusCode <= 299 {
 		log.Info(fmt.Sprintf("%s have got %s permissions in '%s' repository", user, slope, repo))
 	} else {
-		log.Error(fmt.Sprintf("Error %d: Could not give %s permissions in '%s' repository", resp_perm.StatusCode, slope, repo))
+		log.Error(fmt.Sprintf("Error %d: Could not give '%s', %s permissions in '%s' repository", resp_perm.StatusCode, user, slope, repo))
 	}
 	return resp_perm.StatusCode
 }
@@ -266,10 +264,10 @@ func githubRemoveUserFromOP(data []byte) int {
 		return http.StatusNotFound
 	}
 	/*Obtain the work package repository associated from Open Project POST*/
-	id, err := jsonparser.GetString(data, "work_package", "id")
+	id, err := jsonparser.GetInt(data, "work_package", "id")
 	Check(err, "error", "ID was not found on work package")
 	repoURL, err := jsonparser.GetString(data, "work_package", GetCustomFields().RepoField)
-	Check(err, "warning", fmt.Sprintf("Repository was not found on work package with id '%s'", id))
+	Check(err, "warning", fmt.Sprintf("Repository was not found on work package with id '%d'", id))
 	r := strings.Split(repoURL, "/")
 	repo := r[len(r)-1]
 	GH_ORG := r[len(r)-2]

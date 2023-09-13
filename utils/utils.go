@@ -176,32 +176,36 @@ func OpenProjectOptions(data []byte) {
 
 	if _, ok := all["pull_request"]; ok {
 		pr_title, _ := jsonparser.GetString(data, "pull_request", "title")
+		pr_url, _ := jsonparser.GetString(data, "pull_request", "url")
 		action, _ := jsonparser.GetString(data, "action")
 		switch action {
 		case "opened":
-			openprojectChangeStatus(data, 15) // The status ID may be changed if needed
+			//openprojectChangeStatus(data, 15) // The status ID may be changed if needed
 			openprojectPRmsg(
 				data,
-				fmt.Sprintf("[%s] Pull request was opened", pr_title),
-			)
-
-		case "synchronize":
-			openprojectChangeStatus(data, 13) // The status ID may be changed if needed
-			openprojectPRmsg(
-				data,
-				fmt.Sprintf("[%s] Pull request was merged. Task has been closed", pr_title),
+				fmt.Sprintf(`[%s] Pull request was opened ("%s")`, pr_title, pr_url),
 			)
 		case "closed":
-			// openprojectChangeStatus(data, 12)
-			openprojectPRmsg(
-				data,
-				fmt.Sprintf("[%s] Pull request was closed. Task may be closed too", pr_title),
-			)
+			//openprojectChangeStatus(data, 13) // The status ID may be changed if needed
+			merged, err := jsonparser.GetBoolean(data, "pull_request", "merged")
+			Check(err, "error", "ERROR 404: Could not find if a pull request is merged. Assuming it was not.")
+			if merged {
+				openprojectPRmsg(
+					data,
+					fmt.Sprintf(`[%s] Pull request was merged. Task may be closed ("%s")`, pr_title, pr_url),
+				)
+			} else {
+				openprojectPRmsg(
+					data,
+					fmt.Sprintf(`[%s] Pull request was closed. Task may be rejected ("%s")`, pr_title, pr_url),
+				)
+			}
+
 		case "reopened":
-			// openprojectChangeStatus(data, 13)
+			//openprojectChangeStatus(data, 15) // The status ID may be changed if needed
 			openprojectPRmsg(
 				data,
-				fmt.Sprintf("[%s] Pull request was reopened. Task may be reopened too", pr_title),
+				fmt.Sprintf(`[%s] Pull request was reopened. Task may be reopened too (%s)`, pr_title, pr_url),
 			)
 		}
 	} else if _, ok := all["deleted"]; ok {
@@ -270,6 +274,8 @@ func CheckConnectionGithub() bool {
 	if ratelimit == "5000" || resp.StatusCode != 200 {
 		return true
 	} else {
+		log.Warn(fmt.Sprintf("GitHub did not return a valid response when checking token status. Response: %s; Status code: %d", resp.Status, resp.StatusCode))
+
 		config.Set("", "github-token")
 		config.Set("", "github-user")
 
@@ -340,7 +346,7 @@ func CheckConnectionOpenProject() bool {
 		return false
 	}
 	if resp.StatusCode != 200 {
-		log.Warn("Open Project did not return a valid response when checking token status")
+		log.Warn(fmt.Sprintf("Open Project did not return a valid response when checking token status. Response: %s; Status code: %d", resp.Status, resp.StatusCode))
 
 		config.Set("", "openproject-token")
 		config.Set("", "openproject-user")

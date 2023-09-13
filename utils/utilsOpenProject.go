@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Jeffail/gabs/v2"
 	"github.com/buger/jsonparser"
@@ -56,7 +57,7 @@ func openprojectMsg(msg string, id int) {
 
 	resp, err := http.DefaultClient.Do(req)
 	Check(err, "error", fmt.Sprintf("Open Project API call to send message failed (%s)", fmt.Sprintf("%s/api/v3/work_packages/%d/activities", OP_url, id)))
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != 201 {
 		log.Error("Pull request message could not be sent correctly. Check if the custom fields are correctly inserted.")
 	} else {
 		log.Info(fmt.Sprintf("Pull request message sent to package %d", id))
@@ -104,10 +105,8 @@ func openprojectChangeStatus(data []byte, status_id int) {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	_, err = http.DefaultClient.Do(req)
 	Check(err, "error", fmt.Sprintf("Open Project API call to change work package '%d' status failed (%s)", id, fmt.Sprintf("%s/api/v3/work_packages/%d", OP_url, id)))
-	log.Info(resp.Status)
-
 }
 
 /*
@@ -123,7 +122,7 @@ func searchID(s string) int {
 			return x
 		}
 	}
-	Check(fmt.Errorf("no index found for work package with title '%s'", s), "error", "")
+	Check(fmt.Errorf("no index found in '%s' it must be between brackets ('[]')", s), "error", "")
 	return -1
 }
 
@@ -151,7 +150,7 @@ func getLockVersion(wp_id int) int {
 	Check(err, "error", fmt.Sprintf("Open Project API call to get lock version of work package '%d' failed (%s)", wp_id, fmt.Sprintf("%s/api/v3/work_packages/%d", OP_url, wp_id)))
 	body, _ := io.ReadAll(resp.Body)
 	lockV, err := jsonparser.GetInt(body, "lockVersion")
-	Check(err, "error", "lockVersion was not found in response body from Open Project API call to get lock version")
+	Check(err, "error", "The lockVersion was not found in response body from Open Project API call to get lock version")
 
 	return int(lockV)
 }
@@ -375,4 +374,24 @@ func GetLastProjectID(op_url string, token string) int {
 	}
 
 	return int(searchKeys[0]["id"].(float64))
+}
+
+func CheckExpirationDate() bool {
+	var config *gabs.Container
+	if _, err := os.Stat(Config_path); err == nil {
+		config, err = gabs.ParseJSONFile(Config_path)
+		Check(err, "Error", "Error 500. Config file could not be read")
+	} else {
+		config = gabs.New()
+	}
+	expiration, err := jsonparser.GetString(config.Bytes(), "openproject-expiration")
+	if Check(err, "warning", "ERROR 404: Expiration date not found in config file.") {
+		expiration = "2006-01-02T15:04:05Z"
+	}
+	now := time.Now()
+	expDate, err := time.Parse("2006-01-02T15:04:05Z", expiration)
+	if Check(err, "error", "ERROR 501: Error parsing the expiration date") {
+		return false
+	}
+	return now.After(expDate)
 }

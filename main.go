@@ -26,8 +26,6 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-// TODO - COMMENT NEW FUNCTIONS AND UPDATE INSTRUCTIONS
-
 // TODO - IMPLEMENT API KEY METHOD FOR SOME FUNCTIONS
 
 /*Function init sets up logs format and log file metadata. Also loads .env file.*/
@@ -89,7 +87,7 @@ func main() {
 	http.HandleFunc(fmt.Sprintf("%s/github/login/callback", subpath), github.CallbackHandler)
 	http.HandleFunc(fmt.Sprintf("%s/github/loggedin", subpath),
 		func(w http.ResponseWriter, r *http.Request) {
-			github.LoggedinHandler(w, r, nil, "")
+			github.LoggedinHandler(w, r, nil, "", "", "")
 		})
 	http.HandleFunc(fmt.Sprintf("%s/github/webhook", subpath), githubWebhook)
 
@@ -97,7 +95,7 @@ func main() {
 	http.HandleFunc(fmt.Sprintf("%s/op/login/callback", subpath), openproject.CallbackHandler)
 	http.HandleFunc(fmt.Sprintf("%s/op/loggedin", subpath),
 		func(w http.ResponseWriter, r *http.Request) {
-			openproject.LoggedinHandler(w, r, nil, "")
+			openproject.LoggedinHandler(w, r, nil, "", "", "")
 		})
 	http.HandleFunc(fmt.Sprintf("%s/op/save-url", subpath), saveOPurl)
 	http.HandleFunc(fmt.Sprintf("%s/-/health", subpath), func(w http.ResponseWriter, _ *http.Request) {
@@ -363,8 +361,11 @@ func saveOPurl(_ http.ResponseWriter, r *http.Request) {
 /*Function PostOpenProject receives Open Project POSTs and calls requestOpenProject to control it*/
 func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
+		if utils.CheckExpirationDate() {
+			var openproject oauths.Openproject = *oauths.NewOpenproject()
+			openproject.RefreshAuth()
+		}
 		byte_body, err := io.ReadAll(r.Body)
-
 		if err != nil {
 			log.Fatal("Error 500. Internal Server Error. On Open Project post receiving an unexpected error has occured.")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -380,15 +381,13 @@ func PostOpenProject(w http.ResponseWriter, r *http.Request) {
 func requestOpenProject(data []byte) {
 	action, _ := jsonparser.GetString(data, "action")
 	log.Info(fmt.Sprintf("Open Project POST received. Action: '%s' ", action))
-	repo, err := jsonparser.GetString(data, "work_package", utils.GetCustomFields().RepoField)
-	if err != nil {
-		log.Warn("Github repository URL was not found. Check if the repository exists or if the master github user has access to this repository")
-		return
-	}
+
 	wp_type, err2 := jsonparser.GetString(data, "work_package", "_embedded", "type", "name")
 	utils.Check(err2, "error", "Type of task was not found on Open Project post")
 
-	if wp_type == "Task" {
+	if strings.ToLower(wp_type) == "task" {
+		repo, err := jsonparser.GetString(data, "work_package", utils.GetCustomFields().RepoField)
+		utils.Check(err, "warning", "Github repository URL was not found. Check if the repository exists or if the master github user has access to this repository")
 		switch {
 		case strings.Contains(string(repo), "github"):
 			utils.GithubOptions(data)
@@ -401,6 +400,10 @@ func requestOpenProject(data []byte) {
 /*Function PostGithub receives GitHub POSTs and calls utils.OpenProjectOptions to control it*/
 func PostGithub(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
+		if utils.CheckExpirationDate() {
+			var openproject oauths.Openproject = *oauths.NewOpenproject()
+			openproject.RefreshAuth()
+		}
 		byte_body, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -427,6 +430,10 @@ func refreshProxy(w http.ResponseWriter, r *http.Request) {
 		log.Error("Error 401: API key token is not correct or was not found. Check the environment variables")
 		w.Write([]byte("Error 401: Unauthorized. Check if your API key is correct"))
 		return
+	}
+	if utils.CheckExpirationDate() {
+		var openproject oauths.Openproject = *oauths.NewOpenproject()
+		openproject.RefreshAuth()
 	}
 
 	if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
@@ -491,6 +498,10 @@ func resetRefreshDate(_ http.ResponseWriter, _ *http.Request) {
 Function checkFields calls utils.CheckCustomFields() whenever is needed and checks the Open Project custom fields on demand.
 */
 func checkFields(w http.ResponseWriter, _ *http.Request) {
+	if utils.CheckExpirationDate() {
+		var openproject oauths.Openproject = *oauths.NewOpenproject()
+		openproject.RefreshAuth()
+	}
 
 	if !utils.CheckConnectionOpenProject() {
 		w.Write([]byte("Error: Connection with Open Project missing. Log in the app to check the custom fields"))
