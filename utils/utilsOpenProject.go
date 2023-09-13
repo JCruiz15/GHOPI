@@ -58,7 +58,7 @@ func openprojectMsg(msg string, id int) {
 	resp, err := http.DefaultClient.Do(req)
 	Check(err, "error", fmt.Sprintf("Open Project API call to send message failed (%s)", fmt.Sprintf("%s/api/v3/work_packages/%d/activities", OP_url, id)))
 	if resp.StatusCode != 201 {
-		log.Error("Pull request message could not be sent correctly. Check if the custom fields are correctly inserted.")
+		log.Error(fmt.Sprintf("error %d. Pull request message could not be sent correctly. Check if the custom fields are correctly inserted.", resp.StatusCode))
 	} else {
 		log.Info(fmt.Sprintf("Pull request message sent to package %d", id))
 	}
@@ -71,6 +71,7 @@ It uses searchID function to obtain the ID of the work package from the Pull Req
 
 It uses the getLockVersion to obtain the latest version of the work package.
 */
+/*
 func openprojectChangeStatus(data []byte, status_id int) {
 
 	title, errTitle := jsonparser.GetString(data, "pull_request", "title")
@@ -108,7 +109,7 @@ func openprojectChangeStatus(data []byte, status_id int) {
 	_, err = http.DefaultClient.Do(req)
 	Check(err, "error", fmt.Sprintf("Open Project API call to change work package '%d' status failed (%s)", id, fmt.Sprintf("%s/api/v3/work_packages/%d", OP_url, id)))
 }
-
+*/
 /*
 Function searchID looks for a number into brackets from a string given.
 */
@@ -129,6 +130,7 @@ func searchID(s string) int {
 /*
 Function getLockVersion uses the Open Project API to obtain the latest version of the work package given by 'wp_id'.
 */
+/*
 func getLockVersion(wp_id int) int {
 	OP_url = GetOPuri()
 	req, err := http.NewRequest(
@@ -154,7 +156,7 @@ func getLockVersion(wp_id int) int {
 
 	return int(lockV)
 }
-
+*/
 /*
 Function CheckCustomFields has the purpose of checking if the custom fields needed for the correct functioning of the app.
 

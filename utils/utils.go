@@ -124,7 +124,7 @@ func GithubOptions(data []byte) {
 			assignee, err := jsonparser.GetString(respbody, GetCustomFields().GithubUserField)
 			Check(err, "error", "Error when getting github user from Open project. Check if the github user custom field is correctly created. Refresh when all changes are done to check custom fields.")
 
-			link := fmt.Sprintf("%s/compare/%s...%s?quick_pull=1&title=%s&assignees=%s", repo, targetBranch, sourceBranch, fmt.Sprintf("%s-[%d]", sourceBranch, id), assignee)
+			link := fmt.Sprintf("%s/compare/%s...%s?quick_pull=1&title=%s&assignees=%s", repo, targetBranch, sourceBranch, fmt.Sprintf("[%d] Merge %s into %s ", id, sourceBranch, targetBranch), assignee)
 
 			msg := "When the task is finish click in the following link to create a pull request for your task. " + link + ""
 			openprojectMsg(msg, int(id))
@@ -173,7 +173,7 @@ func OpenProjectOptions(data []byte) {
 			//openprojectChangeStatus(data, 15) // The status ID may be changed if needed
 			openprojectPRmsg(
 				data,
-				fmt.Sprintf(`[%s] Pull request was opened ("%s")`, pr_title, pr_url),
+				fmt.Sprintf(`[%s] Pull request was opened ('%s')`, pr_title, pr_url),
 			)
 		case "closed":
 			//openprojectChangeStatus(data, 13) // The status ID may be changed if needed
@@ -182,12 +182,12 @@ func OpenProjectOptions(data []byte) {
 			if merged {
 				openprojectPRmsg(
 					data,
-					fmt.Sprintf(`[%s] Pull request was merged. Task may be closed ("%s")`, pr_title, pr_url),
+					fmt.Sprintf(`[%s] Pull request was merged. Task may be closed ('%s')`, pr_title, pr_url),
 				)
 			} else {
 				openprojectPRmsg(
 					data,
-					fmt.Sprintf(`[%s] Pull request was closed. Task may be rejected ("%s")`, pr_title, pr_url),
+					fmt.Sprintf(`[%s] Pull request was closed. Task may be rejected ('%s')`, pr_title, pr_url),
 				)
 			}
 
@@ -195,7 +195,7 @@ func OpenProjectOptions(data []byte) {
 			//openprojectChangeStatus(data, 15) // The status ID may be changed if needed
 			openprojectPRmsg(
 				data,
-				fmt.Sprintf(`[%s] Pull request was reopened. Task may be reopened too (%s)`, pr_title, pr_url),
+				fmt.Sprintf(`[%s] Pull request was reopened. Task may be reopened too ('%s')`, pr_title, pr_url),
 			)
 		}
 	} else if _, ok := all["deleted"]; ok {
