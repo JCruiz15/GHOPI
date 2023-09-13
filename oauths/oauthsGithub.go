@@ -49,7 +49,14 @@ func NewGithub() *Github {
 /*
 Function LoggedinHandler uses the Data from the callback of GitHub and stores the GitHub user and token in 'config.json'.
 */
-func (gh Github) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data map[string]string, Token string) {
+func (gh Github) LoggedinHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+	Data map[string]string,
+	Token string,
+	_ string,
+	_ string,
+) {
 	if Data == nil {
 		fmt.Fprint(w, "UNAUTHORIZED")
 		return
@@ -107,7 +114,7 @@ Function getAccessToken uses the information from the callback given by GitHub t
 It returns the access token as a string.
 */
 
-func (gh Github) getAccessToken(code string, URL string) string {
+func (gh Github) getAccessToken(code string, URL string) (string, string, string) {
 	requestBodyMap := map[string]string{
 		"client_id":     gh.clientID,
 		"client_secret": gh.secretID,
@@ -139,7 +146,7 @@ func (gh Github) getAccessToken(code string, URL string) string {
 
 	var finalresp AccessTokenResponse
 	json.Unmarshal(respbody, &finalresp)
-	return finalresp.AccessToken
+	return finalresp.AccessToken, "", ""
 }
 
 /*
@@ -183,8 +190,8 @@ func (gh Github) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	subpath := utils.GetSubpath()
 	URL := fmt.Sprintf("https://%s%s", r.Host, subpath)
 
-	AccessToken := gh.getAccessToken(code, URL)
+	AccessToken, emptyRefreshToken, emptyExpirationDate := gh.getAccessToken(code, URL)
 	Data := gh.getData(AccessToken)
 
-	gh.LoggedinHandler(w, r, Data, AccessToken)
+	gh.LoggedinHandler(w, r, Data, AccessToken, emptyRefreshToken, emptyExpirationDate)
 }

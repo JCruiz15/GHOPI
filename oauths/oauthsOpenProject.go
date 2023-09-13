@@ -5,14 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Jeffail/gabs/v2"
+	"github.com/buger/jsonparser"
+	log "github.com/sirupsen/logrus"
 )
 
 /*
@@ -49,7 +51,14 @@ func NewOpenproject() *Openproject {
 /*
 Function LoggedinHandler uses the Data from the callback of Open Project and stores the Open Project user and token in 'config.json'.
 */
-func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, Data map[string]string, Token string) {
+func (op *Openproject) LoggedinHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+	Data map[string]string,
+	Token string,
+	refreshToken string,
+	expirationDate string,
+) {
 	if Data == nil {
 		fmt.Fprint(w, "UNAUTHORIZED")
 		return
@@ -65,6 +74,8 @@ func (op *Openproject) LoggedinHandler(w http.ResponseWriter, r *http.Request, D
 
 		config.Set(Data["name"], "openproject-user")
 		config.Set(Token, "openproject-token")
+		config.Set(refreshToken, "openproject-refresh-token")
+		config.Set(expirationDate, "openproject-expiration")
 
 		f, err := os.Create(utils.Config_path)
 		utils.Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists")
@@ -110,7 +121,7 @@ Function getAccessToken uses the information from the callback given by Open Pro
 
 It returns the access token as a string.
 */
-func (op *Openproject) getAccessToken(code string, URL string) string {
+func (op *Openproject) getAccessToken(code string, URL string) (string, string, string) {
 	utils.OP_url = utils.GetOPuri()
 
 	requestBody := url.Values{}
@@ -135,7 +146,7 @@ func (op *Openproject) getAccessToken(code string, URL string) string {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Panic("Request failed")
+		log.Panic(err.Error())
 	}
 
 	respbody, _ := io.ReadAll(resp.Body)
@@ -143,7 +154,7 @@ func (op *Openproject) getAccessToken(code string, URL string) string {
 	type AccessTokenResponse struct {
 		AccessToken  string `json:"access_token"`
 		TokenType    string `json:"token_type"`
-		ExpireTime   string `json:"expires_in"`
+		ExpireTime   int64  `json:"expires_in"`
 		RefreshToken string `json:"refresh_token"`
 		Scope        string `json:"scope"`
 		Date         string `json:"created_at"`
@@ -151,8 +162,10 @@ func (op *Openproject) getAccessToken(code string, URL string) string {
 
 	var finalresp AccessTokenResponse
 	json.Unmarshal(respbody, &finalresp)
+	twohours, _ := time.ParseDuration(fmt.Sprintf("%ds", finalresp.ExpireTime))
+	expirationDate := time.Now().Add(twohours).Format("2006-01-02T15:04:05Z")
 
-	return finalresp.AccessToken
+	return finalresp.AccessToken, finalresp.RefreshToken, expirationDate
 }
 
 /*
@@ -221,8 +234,83 @@ func (op *Openproject) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		URL = fmt.Sprintf("https://%s%s", r.Host, subpath)
 	}
 
-	AccessToken := op.getAccessToken(code, URL)
+	AccessToken, RefreshToken, expirationDate := op.getAccessToken(code, URL)
 	Data := op.getData(AccessToken)
 
-	op.LoggedinHandler(w, r, Data, AccessToken)
+	op.LoggedinHandler(w, r, Data, AccessToken, RefreshToken, expirationDate)
+}
+
+func (op *Openproject) RefreshAuth() {
+	utils.OP_url = utils.GetOPuri()
+
+	f, err := os.Open(".config/config.json")
+	if utils.Check(err, "error", "Error 500. Config file could not be opened. Config file may not exist") {
+		return
+	}
+	configFile, _ := io.ReadAll(f)
+	refresh_token, err := jsonparser.GetString(configFile, "openproject-refresh-token")
+	if utils.Check(err, "error", "Error 404: Open Project refresh token missing in config file. Log in again in Open Project") {
+		return
+	}
+	defer f.Close()
+
+	requestBody := url.Values{}
+	requestBody.Set("grant_type", "refresh_token")
+	requestBody.Set("client_id", op.clientID)
+	requestBody.Set("client_secret", op.secretID)
+	requestBody.Set("refresh_token", refresh_token)
+	requestBodyEnc := requestBody.Encode()
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/oauth/token", utils.OP_url),
+		strings.NewReader(requestBodyEnc),
+	)
+	if err != nil {
+		log.Panic("Request creation failed")
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Length", strconv.Itoa(len(requestBodyEnc)))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	respbody, _ := io.ReadAll(resp.Body)
+	type AccessTokenResponse struct {
+		AccessToken  string `json:"access_token"`
+		TokenType    string `json:"token_type"`
+		ExpireTime   int64  `json:"expires_in"`
+		RefreshToken string `json:"refresh_token"`
+		Scope        string `json:"scope"`
+		Date         string `json:"created_at"`
+	}
+
+	var finalresp AccessTokenResponse
+	json.Unmarshal(respbody, &finalresp)
+
+	var config *gabs.Container
+	if _, err := os.Stat(utils.Config_path); err == nil {
+		config, err = gabs.ParseJSONFile(utils.Config_path)
+		utils.Check(err, "Error", "Error 500. Config file could not be read")
+	} else {
+		config = gabs.New()
+	}
+
+	twohours, _ := time.ParseDuration(fmt.Sprintf("%ds", finalresp.ExpireTime))
+	expirationDate := time.Now().Add(twohours).Format("2006-01-02T15:04:05Z")
+
+	config.Set(finalresp.AccessToken, "openproject-token")
+	config.Set(finalresp.RefreshToken, "openproject-refresh-token")
+	config.Set(expirationDate, "openproject-expiration")
+
+	f, err = os.Create(utils.Config_path)
+	if utils.Check(err, "Error", "Error 500. Config file could not be created. Config file may not exists") {
+		return
+	}
+	defer f.Close()
+	f.Write(config.BytesIndent("", "\t"))
+	log.Info("Open Project access token was successfully refreshed")
 }
