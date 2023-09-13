@@ -96,6 +96,18 @@
 {{define "scripts"}}
 
 <script>
+    window.onload = checkAPIkey();
+
+    async function checkAPIkey() {
+        config_check = await get_config()
+        if (config_check == null) {
+            document.getElementById("submit-login").disabled = true;
+            document.getElementById("submit-login").title = "Insert the correct API key to use"
+        }
+    }
+</script>
+
+<script>
     async function gh_webhook() {
         const { value: org } = await Swal.fire({
             title: 'Enter organization name',

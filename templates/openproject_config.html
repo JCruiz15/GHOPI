@@ -112,9 +112,7 @@
         config_check = await get_config()
         if (config_check == null) {
             document.getElementById("submit-login").disabled = true;
-            document.getElementById("submit-login").onclick = function() {
-                Swal.fire("ERROR 401", "Unauthenticated. Check your api token", "error")
-            }
+            document.getElementById("submit-login").title = "Insert the correct API key to use"
         }
     }
 </script>

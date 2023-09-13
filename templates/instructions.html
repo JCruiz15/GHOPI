@@ -54,7 +54,8 @@
 <a class="secondary-text" href="#configureGithub">&ensp;&ensp;1.2. Configuring Github</a>
 <a class="secondary-text" href="#configuringGHuser">&ensp;&ensp;&ensp;1.2.1. Logging in with Github</a>
 <a class="secondary-text" href="#configuringGHwebhook">&ensp;&ensp;&ensp;1.2.2. Github webhooks</a>
-<a class="secondary-text" href="#others">&ensp;2. Useful information</a>
+<a class="secondary-text" href="#apitoken">&ensp;2. API Token</a>
+<a class="secondary-text" href="#others">&ensp;3. Useful information</a>
 
 {{end}}
 
@@ -66,9 +67,9 @@
         Welcome to the user manual for GHOPI, our synchronization app between OpenProject and GitHub. This app provides a solution for users who want to synchronize their project data between these two popular platforms.
         Using our app, you will be able to easily create a channel of communication between OpenProject and GitHub, allowing you to keep your projects up-to-date and avoid the need for manual data entry.<br>
         This user manual will guide you through the process of configuring, and using GHOPI. We will provide step-by-step instructions, helpful tips, and screenshots to help you get the most out of the app. Whether you are a project manager, software developer, or just a freelancer who is trying to improve its work flow, our app is designed to simplify your workflow and enhance your productivity.<br>
-        Thank you for choosing GHOPI, and we hope that this user manual will be a valuable resource for you as you use our app to synchronize your project data between OpenProject and GitHub.<br class="mb-3">
+        Thank you for choosing GHOPI, and we hope that this user manual will be a valuable resource for you as you use our app to synchronize your project data between OpenProject and GitHub.
         <br><br>
-        As part of the latest GHOPI's updates, some extra features have been added to the app such as, the check of custom fields on demand and the reset of the last refresh date. For further information check our<a href="https://github.com/JCruiz15/GHOPI">GitHub repository</a>.
+        As part of the latest GHOPI's updates, some extra features have been added to the app such as, the check of custom fields on demand and the reset of the last refresh date. For further information check our <a href="https://github.com/JCruiz15/GHOPI">GitHub repository</a>.<br class="mb-3">
         <h3 id="configuringGHOPI" class="mt-2">1. GHOPI's configuration</h3>
         In this manual we are not explaining how to install this app, because to read this you have to had it already installed. We will explain how to configure GHOPI so it can receive data from Github and Open Project.
         This channel will make use of the webhooks provided by both apps, so you will need to have this app running in a <b>visible port</b> for both apps. Normally the app will be running on port 5050.
@@ -186,7 +187,26 @@
         You can obtain the Github webhook endpoint using the '<b>Copy URL</b>' button in GHOPI's navbar, and selecting Github API endpoint.<br>
         Using either one method or other you will create the webhook needed to connect Github with GHOPI. For more information about Github webhooks visit the <a href="https://docs.github.com/en/webhooks-and-events/webhooks/about-webhooks">Github documentation</a>.
 
-        <h3 id="others" class="mt-4">2. Useful information</h3>
+        <h3 id="apitoken" class="mt-4">2. API Token</h3>
+        In order to have more security in GHOPI app, we have implemented an API token checking process so the app may only be used by whosever is authorized. This API token will be determined by the administrator in a environment variable at the time of the app's launch. 
+        This token must be secret and we highly recommend to share it only with reliable people. The token will be related with the navigator so its purpose is to control who can access to the UI endpoints. The only accessible endpoints without an API token are:<br>
+        <ul class="mb-3 mt-3">
+          <li class="mb-2"><span style="font-family: monospace; background-color: lightgray; padding: 3px; border-radius: 4px;">&ltsubpath&gt/api/openproject</span></li>
+          <li class="mb-2"><span style="font-family: monospace; background-color: lightgray; padding: 3px; border-radius: 4px;">&ltsubpath&gt/api/github</span></li>
+          <li class="mb-2"><span style="font-family: monospace; background-color: lightgray; padding: 3px; border-radius: 4px;">&ltsubpath&gt/github/login/callback</span></li>
+          <li class="mb-2"><span style="font-family: monospace; background-color: lightgray; padding: 3px; border-radius: 4px;">&ltsubpath&gt/github/loggedin</span></li>
+          <li class="mb-2"><span style="font-family: monospace; background-color: lightgray; padding: 3px; border-radius: 4px;">&ltsubpath&gt/op/login/callback</span></li>
+          <li class="mb-2"><span style="font-family: monospace; background-color: lightgray; padding: 3px; border-radius: 4px;">&ltsubpath&gt/op/loggedin</span></li>
+          <li class="mb-2"><span style="font-family: monospace; background-color: lightgray; padding: 3px; border-radius: 4px;">&ltsubpath&gt/-/health</span></li>
+        </ul>
+
+        The API token must be insert using the UI with the button "API token" at the navbar. This will show a text field where you must introduce the correct API token which will be saved in your navigator for 6 months.
+        <div style="text-align: center; margin-top: 2vh; margin-bottom: 2vh;">
+          <img src="{{.subpath}}/static/img/usermanual/apikey_button.png" style="width: 50vw;"/>        
+        </div>
+        Once it is in your computer memory, all the app's functionalities will be available for you to use.
+
+        <h3 id="others" class="mt-4">3. Useful information</h3>
         You can check our <a href="https://github.com/JCruiz15/GHOPI">Github repository</a> to get more information about GHOPI's installation. You can also contact us by opening an issue in the Github repository. <br>
         This project is licensed by the GNU license, read the terms of the license <a href="https://github.com/JCruiz15/GHOPI/blob/main/LICENSE.md">here</a>.
         

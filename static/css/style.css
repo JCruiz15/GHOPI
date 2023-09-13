@@ -278,3 +278,9 @@ main h4 {
     background-color: var(--cerulean);
   }
 }
+
+@media screen and (min-width: 775px) {
+  #navbar-apikey {
+    margin-left: 1em;
+  }
+}

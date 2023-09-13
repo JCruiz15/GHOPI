@@ -65,7 +65,7 @@ docker run \
 This shell commands will set up and launch GHOPI free to use. Then use your chosen technology to launch the app publicly.
 
 <!-- > **NOTE**: A `deploy.sh` file is provided so the build and running of the image may be done automatically. Be sure to have the .env file filled up. -->
-
+> **IMPORTANT**: Remember to change the API key when setting up the environment variables. By default the API key is "myapikey".
 ### Using Go 
 
 Firstly, clone this repository into your computer using git. Then create a `.env` file as explained in section [Setting up .env file](#setting-up-.env-file). Finally execute the command:

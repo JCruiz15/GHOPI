@@ -176,9 +176,9 @@ func logs(w http.ResponseWriter, _ *http.Request) {
 
 /*Function getLogs reads output.txt and returns its information as an html plain text*/
 func getLogs(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.Header.Get("Authentication"))
 	if !utils.APIkeyCheck(r) {
-		log.Error("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		w.Write([]byte("ERROR 401"))
 		return
 	}
 
@@ -228,7 +228,7 @@ func getLogs(w http.ResponseWriter, r *http.Request) {
 func getConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if !utils.APIkeyCheck(r) { //Check API token
-		log.Error("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
 		http.Error(w, `{"message": "ERROR 401: Unauthorized. Check if your API key is correct"}`, http.StatusUnauthorized)
 		return
 	}
@@ -252,7 +252,7 @@ func getConfig(w http.ResponseWriter, r *http.Request) {
 func githubWebhook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if !utils.APIkeyCheck(r) { //Check API token
-		log.Error("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
 		http.Error(w, `{"message": "ERROR 401: Unauthorized. Check if your API key is correct"}`, http.StatusUnauthorized)
 		return
 	}
@@ -337,7 +337,7 @@ func githubWebhook(w http.ResponseWriter, r *http.Request) {
 func saveOPurl(w http.ResponseWriter, r *http.Request) {
 	if !utils.APIkeyCheck(r) {
 		http.Error(w, `{"message": "ERROR 401: Unauthorized. Check if your API key is correct"}`, http.StatusUnauthorized)
-		log.Error("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
 		return
 	}
 	type save_json struct {
@@ -434,7 +434,7 @@ func refreshProxy(w http.ResponseWriter, r *http.Request) {
 	var config *gabs.Container
 
 	if !utils.APIkeyCheck(r) { //Check API token
-		log.Error("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
 		w.Write([]byte("Error 401: Unauthorized. Check if your API key is correct"))
 		return
 	}
@@ -489,7 +489,7 @@ Function resetRefreshDate deletes the latest refresh date stored in config.json
 */
 func resetRefreshDate(w http.ResponseWriter, r *http.Request) {
 	if !utils.APIkeyCheck(r) { //Check API token
-		log.Error("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
 		http.Error(w, `{"message": "ERROR 401: Unauthorized. Check if your API key is correct"}`, http.StatusUnauthorized)
 		return
 	}
@@ -510,7 +510,7 @@ Function checkFields calls utils.CheckCustomFields() whenever is needed and chec
 */
 func checkFields(w http.ResponseWriter, r *http.Request) {
 	if !utils.APIkeyCheck(r) { //Check API token
-		log.Error("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
 		w.Write([]byte("Error 401: Unauthorized. Check if your API key is correct"))
 		return
 	}
