@@ -92,6 +92,7 @@ func (op *Openproject) LoggedinHandler(
 Function LoginHandler creates the URL that redirects to Open Project with the permissions needed for GHOPI.
 */
 func (op *Openproject) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	//TODO - CHECK APIKEY
 	var URL string = "http://localhost:8089"
 	subpath := utils.GetSubpath()
 	if strings.Contains(r.Host, "localhost") {

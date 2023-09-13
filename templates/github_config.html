@@ -148,26 +148,9 @@
 </script>
 
 <script>
-    async function get_config() {
-        let res
-        let response = await fetch(url_config, {
-            headers: {'Authentication': 'Bearer '.concat(readCookie("apikey"))}
-        }).then(
-            (response) => {
-                if(response.ok) {
-                    res = response.json()
-                } 
-                else {
-                    res = null
-                }
-            }
-        )
-        return res
-        
-    }
-
     async function show_user() {
         config = await get_config();
+
         if(config == null) {
             return
         }

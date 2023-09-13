@@ -243,20 +243,41 @@
             fetch(URL_RESET, {
                 headers: {'Authentication': 'Bearer '.concat(readCookie("apikey"))}
             }).then(res => {
-                return res.text()
-            }).then(text => {
-                let type = "success";
-                let title = "Finished reset of last refresh date";
-                if (text.startsWith("Error")) {
-                    type = "error";
-                    title = "Error when doing the reset"
+                if (res.ok) {
+                    console.log("ok")
+                    Swal.fire({
+                        title: "Finished reset of last refresh date",
+                        text: "",
+                        icon: "success"
+                    })
+                } else {
+                    Swal.fire({
+                        title: "ERROR "+res.status.toString(),
+                        text: res.statusText+". Check your API key",
+                        icon: "error"
+                    })
                 }
-                Swal.fire({
-                    title: title,
-                    text: text,
-                    icon: type
-                })
+            }).then(text => {
+                
             })
+        }
+
+        async function get_config() {
+            let res
+            let response = await fetch(url_config, {
+                headers: {'Authentication': 'Bearer '.concat(readCookie("apikey"))}
+            }).then(
+                (response) => {
+                    if(response.ok) {
+                        res = response.json()
+                    } 
+                    else {
+                        res = null
+                    }
+                }
+            )
+            return res
+            
         }
     </script>
 
