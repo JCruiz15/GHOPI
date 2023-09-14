@@ -393,11 +393,12 @@ func PostGithub(w http.ResponseWriter, r *http.Request) {
 		}
 		go utils.OpenProjectOptions(byte_body)
 		event := r.Header.Get("X-GitHub-Event")
+		action, _ := jsonparser.GetString(byte_body, "action")
 		repo_fullname, _ := jsonparser.GetString(byte_body, "repository", "full_name")
 		user, _ := jsonparser.GetString(byte_body, "sender", "login")
 		organization, _ := jsonparser.GetString(byte_body, "organization", "login")
 
-		log.Info(fmt.Sprintf("Github POST received. Post event: '%s'; Organization: %s; Repository: '%s'; User: '%s' ", event, organization, repo_fullname, user))
+		log.Info(fmt.Sprintf("Github POST received. Post event: '%s'; Action: %s; Organization: %s; Repository: '%s'; User: '%s' ", event, action, organization, repo_fullname, user))
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
