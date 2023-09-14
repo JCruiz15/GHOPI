@@ -124,13 +124,18 @@
         let fileterd_date = false;
 
         async function get_logs() {
-            let response = await fetch(url);
+            let response = await fetch(url, {
+                headers: {'Authentication': 'Bearer '.concat(readCookie("apikey"))}
+            });
             let data = await response.text();
+            if(data == "ERROR 401") {
+                logs.title = "Error 401: Unauthenticated. Insert the correct API key to see GHOPI's logs."
+            }
             return data;
         }
 
         async function show_logs() {
-            logs.innerHTML = await get_logs();
+            //logs.innerHTML = await get_logs();
             filterByType(4);
             filtered_type = false;
             filtered_date = false;

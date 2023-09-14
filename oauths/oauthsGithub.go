@@ -88,6 +88,7 @@ func (gh Github) LoggedinHandler(
 Function LoginHandler creates the URL that redirects to GitHub with the permissions needed for GHOPI.
 */
 func (gh *Github) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	//TODO - CHECK APIKEY
 	var URL string
 	subpath := utils.GetSubpath()
 	if strings.Contains(r.Host, "localhost") {

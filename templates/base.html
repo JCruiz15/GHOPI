@@ -15,6 +15,11 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
     <!-- Links and title inside the head tag -->
+    <style>
+        .label-centre{
+            text-align: center;            
+        }
+    </style>
     {{template "head" .}}
 </head>
 
@@ -29,8 +34,8 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 
-                <div class="collapse navbar-collapse" id="menuItems">
-                    <ul class="navbar-nav me-auto">
+                <div class="collapse navbar-collapse me-auto" id="menuItems">
+                    <ul class="navbar-nav">
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Copy URL
@@ -57,6 +62,7 @@
                             </ul>
                         </li>
                     </ul>
+                    <a class="navbar-nav nav-link" id="navbar-apikey" role="button" onclick="insertAPIkey()">API Token</a>
                 </div>
                 {{template "navbar" .}}
             </nav>
@@ -85,6 +91,60 @@
 
     <!-- Scripts -->
     <script>
+        const url_config = window.location.href.split(location.pathname)[0] + "{{.subpath}}/api/get-config";
+        
+        /**
+         * @param {string} name
+         * @return {string}
+         */
+        function readCookie(name) {
+            var nameEQ = name + "=";
+            var cookies = document.cookie.split(';');
+            for(var i=0;i < cookies.length;i++) {
+                var cookie = cookies[i];
+                while (cookie.charAt(0)==' ') cookie = cookie.substring(1,cookie.length);
+                if (cookie.indexOf(nameEQ) == 0) return cookie.substring(nameEQ.length,cookie.length);
+            }
+            return "";
+        }
+
+        async function insertAPIkey() {
+            let initialValue = readCookie("apikey")
+
+            const { value: key } = await Swal.fire({
+                title: 'Enter you API Token',
+                input: 'text',
+                inputValue: initialValue,
+                inputLabel: 'Insert here your API token provided by the host',
+                customClass: {
+                    input: 'label-centre',
+                    inputLabel: 'label-centre'
+                  },
+                showCancelButton: true,
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You must write something'
+                    }
+                    if (value.includes(" ")) {
+                        return 'API token must not have blank spaces'
+                    }
+                }
+            })
+            if(key) {      
+                pair = "apikey=".concat(key, ";samesite=lax;max-age=15811200")  //lax --> envía cookies a las peticiones de GET de ALTO NIVEL | max-age --> la cookie persiste 6 meses 
+                document.cookie = pair
+                Swal.fire("API token saved", "API key was received and saved successfully", "success").then(function(){
+                    window.location.reload();
+                })
+            }
+        }
+    </script>
+
+    <script>
+        /**
+         * @param {string} u
+         * @return {string}
+         */
         function getPathFromUrl(u) {
             if (location.pathname == "/") {
                 return u.split(/[?#]/)[0];
@@ -157,7 +217,9 @@
         const theButton = document.querySelector(".btn-sync");
     
         function refresh(){
-            fetch(URL_REFRESH).then(res => {
+            fetch(URL_REFRESH, {
+                headers: {'Authentication': 'Bearer '.concat(readCookie("apikey"))}
+            }).then(res => {
                 return res.text()
             }).then(text => {
                 theButton.classList.remove("btn-sync--loading");
@@ -187,21 +249,44 @@
         const resetButton = document.getElementById("button-reset");
     
         function reset_date(){
-            fetch(URL_RESET).then(res => {
-                return res.text()
-            }).then(text => {
-                let type = "success";
-                let title = "Finished reset of last refresh date";
-                if (text.startsWith("Error")) {
-                    type = "error";
-                    title = "Error when doing the reset"
+            fetch(URL_RESET, {
+                headers: {'Authentication': 'Bearer '.concat(readCookie("apikey"))}
+            }).then(res => {
+                if (res.ok) {
+                    console.log("ok")
+                    Swal.fire({
+                        title: "Finished reset of last refresh date",
+                        text: "",
+                        icon: "success"
+                    })
+                } else {
+                    Swal.fire({
+                        title: "ERROR "+res.status.toString(),
+                        text: res.statusText+". Check your API key",
+                        icon: "error"
+                    })
                 }
-                Swal.fire({
-                    title: title,
-                    text: text,
-                    icon: type
-                })
+            }).then(text => {
+                
             })
+        }
+
+        async function get_config() {
+            let res
+            let response = await fetch(url_config, {
+                headers: {'Authentication': 'Bearer '.concat(readCookie("apikey"))}
+            }).then(
+                (response) => {
+                    if(response.ok) {
+                        res = response.json()
+                    } 
+                    else {
+                        res = null
+                    }
+                }
+            )
+            return res
+            
         }
     </script>
 

@@ -16,6 +16,7 @@ ENV OPENPROJECT_CLIENTID=your-openproject-client-id
 ENV OPENPROJECT_SECRETID=your-openproject-secret
 ENV PORT=8080
 ENV URL_SUBPATH=
+ENV API_KEY=myapikey
 
 # copy project
 COPY . .

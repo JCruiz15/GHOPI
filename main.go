@@ -81,6 +81,7 @@ func main() {
 	http.HandleFunc(fmt.Sprintf("%s/api/refresh", subpath), refreshProxy)
 	http.HandleFunc(fmt.Sprintf("%s/api/reset/refresh", subpath), resetRefreshDate)
 	http.HandleFunc(fmt.Sprintf("%s/api/check-custom-fields", subpath), checkFields)
+	// http.HandleFunc(fmt.Sprintf("%s/api/save-APIkey", subpath), saveAPIkey)
 
 	http.HandleFunc(fmt.Sprintf("%s/github/login", subpath), github.LoginHandler)
 	http.HandleFunc(fmt.Sprintf("%s/github/login/callback", subpath), github.CallbackHandler)
@@ -174,7 +175,13 @@ func logs(w http.ResponseWriter, _ *http.Request) {
 }
 
 /*Function getLogs reads output.txt and returns its information as an html plain text*/
-func getLogs(w http.ResponseWriter, _ *http.Request) {
+func getLogs(w http.ResponseWriter, r *http.Request) {
+	if !utils.APIkeyCheck(r) {
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		w.Write([]byte("ERROR 401"))
+		return
+	}
+
 	file, err := os.Open(".config/outputs.log")
 	utils.Check(err, "error", "Error 500. Logs file could not be open")
 	defer file.Close()
@@ -218,7 +225,14 @@ func getLogs(w http.ResponseWriter, _ *http.Request) {
 }
 
 /*Function getConfig reads .config/config.json file and sends the information as a POST without the tokens information*/
-func getConfig(w http.ResponseWriter, _ *http.Request) {
+func getConfig(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if !utils.APIkeyCheck(r) { //Check API token
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		http.Error(w, `{"message": "ERROR 401: Unauthorized. Check if your API key is correct"}`, http.StatusUnauthorized)
+		return
+	}
+
 	var config *gabs.Container
 
 	if _, err := os.Stat(utils.Config_path); err == nil {
@@ -237,6 +251,11 @@ func getConfig(w http.ResponseWriter, _ *http.Request) {
 /*Function githubWebhook uses GitHub API to create a webhook with the organization sent*/
 func githubWebhook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	if !utils.APIkeyCheck(r) { //Check API token
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		http.Error(w, `{"message": "ERROR 401: Unauthorized. Check if your API key is correct"}`, http.StatusUnauthorized)
+		return
+	}
 	var orgName string = ""
 
 	if r.Method == "POST" {
@@ -315,7 +334,12 @@ func githubWebhook(w http.ResponseWriter, r *http.Request) {
 }
 
 /*Function saveOPurl saves the Open Project instance URL into the config.json file using the information in the OP_url variable recieved*/
-func saveOPurl(_ http.ResponseWriter, r *http.Request) {
+func saveOPurl(w http.ResponseWriter, r *http.Request) {
+	if !utils.APIkeyCheck(r) {
+		http.Error(w, `{"message": "ERROR 401: Unauthorized. Check if your API key is correct"}`, http.StatusUnauthorized)
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		return
+	}
 	type save_json struct {
 		OP_url string `json:"op_url"`
 	}
@@ -397,25 +421,29 @@ func PostGithub(w http.ResponseWriter, r *http.Request) {
 		repo_fullname, _ := jsonparser.GetString(byte_body, "repository", "full_name")
 		user, _ := jsonparser.GetString(byte_body, "sender", "login")
 		organization, _ := jsonparser.GetString(byte_body, "organization", "login")
-
-		log.Info(fmt.Sprintf("Github POST received. Post event: '%s'; Action: %s; Organization: %s; Repository: '%s'; User: '%s' ", event, action, organization, repo_fullname, user))
+		log.Info(fmt.Sprintf("Github POST received. Post event: '%s'; Action: '%s'; Organization: %s; Repository: '%s'; User: '%s' ", event, action, organization, repo_fullname, user))
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
 }
 
 /*Function refreshProxy reads lastRefresh.txt before calling the utils.Refresh function and do the synchronization*/
-func refreshProxy(w http.ResponseWriter, _ *http.Request) {
+func refreshProxy(w http.ResponseWriter, r *http.Request) {
 	var lastRefresh time.Time
 	var config *gabs.Container
 
+	if !utils.APIkeyCheck(r) { //Check API token
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		w.Write([]byte("Error 401: Unauthorized. Check if your API key is correct"))
+		return
+	}
 	if utils.CheckExpirationDate() {
 		var openproject oauths.Openproject = *oauths.NewOpenproject()
 		openproject.RefreshAuth()
 	}
 
 	if !utils.CheckConnectionGithub() || !utils.CheckConnectionOpenProject() {
-		w.Write([]byte("Error 400. The connection with Open Project or Github is not done or has expired. Log in them before trying to refresh"))
+		w.Write([]byte("Error 400. The connection with Open Project or Github is not working. Log in them before trying to refresh"))
 		return
 	}
 
@@ -458,8 +486,12 @@ func refreshProxy(w http.ResponseWriter, _ *http.Request) {
 /*
 Function resetRefreshDate deletes the latest refresh date stored in config.json
 */
-func resetRefreshDate(_ http.ResponseWriter, _ *http.Request) {
-
+func resetRefreshDate(w http.ResponseWriter, r *http.Request) {
+	if !utils.APIkeyCheck(r) { //Check API token
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		http.Error(w, `{"message": "ERROR 401: Unauthorized. Check if your API key is correct"}`, http.StatusUnauthorized)
+		return
+	}
 	config, err := gabs.ParseJSONFile(utils.Config_path)
 	utils.Check(err, "Error", "Error 500. Config file could not be read")
 
@@ -475,7 +507,13 @@ func resetRefreshDate(_ http.ResponseWriter, _ *http.Request) {
 /*
 Function checkFields calls utils.CheckCustomFields() whenever is needed and checks the Open Project custom fields on demand.
 */
-func checkFields(w http.ResponseWriter, _ *http.Request) {
+func checkFields(w http.ResponseWriter, r *http.Request) {
+	if !utils.APIkeyCheck(r) { //Check API token
+		log.Warn("Error 401: API key token is not correct or was not found. Use your api key to use GHOPI's functionalities")
+		w.Write([]byte("Error 401: Unauthorized. Check if your API key is correct"))
+		return
+	}
+
 	if utils.CheckExpirationDate() {
 		var openproject oauths.Openproject = *oauths.NewOpenproject()
 		openproject.RefreshAuth()
@@ -496,3 +534,39 @@ func checkFields(w http.ResponseWriter, _ *http.Request) {
 	}
 	w.Write([]byte(msg))
 }
+
+// func saveAPIkey(w http.ResponseWriter, r *http.Request) {
+// 	type save_APIkey struct {
+// 		APIkey string `json:"APIkey"`
+// 	}
+// 	b_body, err := io.ReadAll(r.Body)
+// 	if utils.Check(err, "error", "Error 500. Internal server error. API key was not sent correctly and it could not be read. Try again in a few minutes") {
+// 		w.Write([]byte(`{"message":"Error 500. Internal server error. API key was not sent correctly and it could not be read. Try again in a few minutes"}`))
+// 		return
+// 	}
+// 	var body save_APIkey
+// 	json.Unmarshal(b_body, &body)
+
+// 	var config *gabs.Container
+
+// 	if _, err := os.Stat(utils.Config_path); err == nil {
+// 		config, err = gabs.ParseJSONFile(utils.Config_path)
+// 		if utils.Check(err, "error", "Error 500. Config file could not be read") {
+// 			w.Write([]byte(`{"message":"Error 500. Config file could not be read"}`))
+// 			return
+// 		}
+// 	} else {
+// 		config = gabs.New()
+// 	}
+// 	config.Set(body.APIkey, "APIkey")
+
+// 	f, err := os.Create(utils.Config_path)
+// 	if utils.Check(err, "Error", "Error creating config file on its destination path ('./.config')") {
+// 		w.Write([]byte(`{"message":"Error creating config file on its destination path ('./.config')"}`))
+// 		return
+// 	}
+// 	defer f.Close()
+// 	f.Write(config.BytesIndent("", "\t"))
+// 	log.Info("API key received and saved successfully")
+// 	w.Write([]byte(`{"success":"API key saved successfully"}`))
+// }

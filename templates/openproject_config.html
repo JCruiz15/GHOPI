@@ -106,6 +106,18 @@
 {{define "scripts"}}
 
 <script>
+    window.onload = checkAPIkey();
+
+    async function checkAPIkey() {
+        config_check = await get_config()
+        if (config_check == null) {
+            document.getElementById("submit-login").disabled = true;
+            document.getElementById("submit-login").title = "Insert the correct API key to use"
+        }
+    }
+</script>
+
+<script>
     function containsOnly(str, set) {
         return str.split('').every(function(ch) {
             return set.indexOf(ch) !== -1;
@@ -133,10 +145,17 @@
 
             fetch(url, {
                 method: "POST",
-                headers: {'Content-Type': 'application/json'}, 
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authentication': 'Bearer '.concat(readCookie("apikey"))
+                }, 
                 body: JSON.stringify(data)
             }).then(res => {
-                Swal.fire("URL saved", "", "info")
+                if (res.ok) {
+                    Swal.fire("URL saved", "URL ("+ data.op_url +") was saved into config file", "info")
+                } else {
+                    Swal.fire("ERROR "+res.status.toString(), res.statusText+". Check your api token", "error")
+                }
             });
         }
     }
@@ -146,7 +165,11 @@
     function checkfields() {
         const url = window.location.href.split(location.pathname)[0] + "{{.subpath}}/api/check-custom-fields";
         
-        fetch(url).then(res => {
+        fetch(url, {
+            headers: {
+                'Authentication': 'Bearer '.concat(readCookie("apikey"))
+            }
+        }).then(res => {
             return res.text()
         }).then(text => {
             let type = "success";
@@ -165,18 +188,15 @@
 </script>
 
 <script>
-    const url_config = window.location.href.split(location.pathname)[0] + "{{.subpath}}/api/get-config";
     let field = document.getElementById("op_url");
-
-    async function get_config() {
-        let response = await fetch(url_config);
-        let data = await response.text();
-        return data;
-    }
 
     async function show_url() {
         config = await get_config();
-        config = JSON.parse(config);
+        if(config == null) {
+            document.getElementById("op_url").value = "";
+            return
+        }
+
         if(config['openproject-url'] != "" && config['openproject-url'] != undefined) {
             document.getElementById("op_url").value = config['openproject-url'].split("://")[1];
         }
@@ -184,7 +204,10 @@
 
     async function show_user() {
         config = await get_config();
-        config = JSON.parse(config);
+        if(config == null) {
+            return
+        }
+
         if(config['openproject-user'] != "" && config['openproject-user'] != undefined) {
             let label = document.getElementById("login-label");
             label.innerHTML = "Signed in as <b>" + config['openproject-user'] + "</b>";

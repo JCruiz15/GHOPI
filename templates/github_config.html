@@ -96,6 +96,18 @@
 {{define "scripts"}}
 
 <script>
+    window.onload = checkAPIkey();
+
+    async function checkAPIkey() {
+        config_check = await get_config()
+        if (config_check == null) {
+            document.getElementById("submit-login").disabled = true;
+            document.getElementById("submit-login").title = "Insert the correct API key to use"
+        }
+    }
+</script>
+
+<script>
     async function gh_webhook() {
         const { value: org } = await Swal.fire({
             title: 'Enter organization name',
@@ -121,6 +133,7 @@
                     fetch('{{.subpath}}/github/webhook', {
                         method: 'POST',
                         headers: {
+                            'Authentication': 'Bearer '.concat(readCookie("apikey")),
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify(data),
@@ -147,17 +160,13 @@
 </script>
 
 <script>
-    const url_config = window.location.href.split(location.pathname)[0] + "{{.subpath}}/api/get-config";
-
-    async function get_config() {
-        let response = await fetch(url_config);
-        let data = await response.text();
-        return data;
-    }
-
     async function show_user() {
         config = await get_config();
-        config = JSON.parse(config);
+
+        if(config == null) {
+            return
+        }
+        
         if(config['github-user'] != "" && config['github-user'] != undefined) {
             let label = document.getElementById("login-label");
             label.innerHTML = "Signed in as <b>" + config['github-user'] + "</b>";
